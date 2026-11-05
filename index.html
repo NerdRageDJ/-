@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SAP-C02 背考助手</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23ff9900'/></svg>" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">C02</span>
+      <div>
+        <div class="title">SAP-C02 背考助手</div>
+        <div class="subtitle">AWS Certified Solutions Architect – Professional</div>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <a href="#/home" data-view="home">概览</a>
+      <a href="#/method" data-view="method">方法论</a>
+      <a href="#/bank" data-view="bank">真题库</a>
+      <a href="#/cards" data-view="cards">闪卡</a>
+      <a href="#/quiz" data-view="quiz">练习题</a>
+      <a href="#/wrong" data-view="wrong">错题本</a>
+      <a href="#/keywords" data-view="keywords">关键词速查</a>
+    </nav>
+  </header>
+
+  <main id="app" class="container"></main>
+
+  <footer class="footer">
+    进度保存在本机浏览器（localStorage）。快捷键：闪卡 <kbd>空格</kbd> 翻面，<kbd>1</kbd>/<kbd>2</kbd>/<kbd>3</kbd> 评分；练习与真题库 <kbd>A</kbd>–<kbd>F</kbd> 选择，<kbd>Enter</kbd> 提交/下一题，真题库 <kbd>H</kbd> 看抓手、<kbd>←</kbd>/<kbd>→</kbd> 翻题。
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="methods.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
