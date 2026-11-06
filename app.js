@@ -597,6 +597,9 @@
   }
 
   async function initBank() {
+    if (typeof window.SAP_BANK_CSV === "string") {
+      try { setBank(bankFromCSV(window.SAP_BANK_CSV)); return; } catch (_) { /* 内嵌数据损坏时退回其他来源 */ }
+    }
     try {
       const cached = localStorage.getItem(BANK_KEY);
       if (cached) { setBank(JSON.parse(cached)); return; }
@@ -785,6 +788,7 @@
     on("b-grip", "onclick", () => { bankSess.showGrip = true; renderBank(); });
     on("b-reimport", "onclick", () => importBankFile(() => { buildBankList(); renderBank(); }));
     on("b-clear", "onclick", () => {
+      if (typeof window.SAP_BANK_CSV === "string") { alert("当前题库内嵌在 HTML 文件中，无法移除。"); return; }
       if (!confirm("从本机浏览器移除已导入的题库？（做题记录会保留）")) return;
       localStorage.removeItem(BANK_KEY);
       BANK = null;

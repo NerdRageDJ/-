@@ -1,3 +1,6 @@
 # 个人题库数据只在本地使用，不提交到公开仓库
 bank.csv
 *.csv
+
+# 内嵌了个人题库的打包文件
+dist/*with-bank*.html

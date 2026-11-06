@@ -19,6 +19,18 @@ python3 -m http.server 8000
 
 也可以直接双击 `index.html` 打开（此时真题库需要手动点“导入 CSV”）。
 
+### 单文件版本（iPad / 无法运行服务器时）
+
+`dist/sapc02-standalone.html` 已经把样式、脚本和方法论全部内联，单个文件即可离线使用，打开后在“真题库”页导入 CSV。
+
+如果想连题库也一起打包进去：
+
+```bash
+node tools/build-single-html.js --bank bank.csv   # 生成 dist/sapc02-with-bank.html
+```
+
+内嵌题库的文件已加入 `.gitignore`，请勿提交到公开仓库。修改源码后运行 `node tools/build-single-html.js` 重新生成单文件版本。做题进度保存在打开该文件的浏览器/App 的本地存储中，换设备或换 App 前请先在“概览”页导出进度。
+
 ### 导入题库
 
 CSV 至少需要 `原题号`、`原题干`、`全部选项`、`题库答案` 四列；推荐同时包含 `主题分类`、`题干抓手`、`答案联想`、`关联记忆短句`、`多选拆记`、`核验状态`、`核验备注`、`原解析`。`全部选项` 的格式为 `A：……；B：……`。
