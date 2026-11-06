@@ -22,7 +22,7 @@
       cards: s.cards || {},
       questions: s.questions || {},
       wrong: s.wrong || [],
-      bank: { rec: bank.rec || {}, wrong: bank.wrong || [], ui: bank.ui || {} },
+      bank: { rec: bank.rec || {}, wrong: bank.wrong || [], ui: bank.ui || {}, recallUi: bank.recallUi || {} },
       tipsDone: s.tipsDone || {},
     };
   }
@@ -597,11 +597,14 @@
   }
 
   async function initBank() {
+    if (typeof window.SAP_BANK_CSV === "string") {
+      try { setBank(bankFromCSV(window.SAP_BANK_CSV)); return; } catch (_) { /* 内嵌数据损坏时退回其他来源 */ }
+    }
     try {
       const cached = localStorage.getItem(BANK_KEY);
       if (cached) { setBank(JSON.parse(cached)); return; }
     } catch (_) { /* 缓存损坏时忽略，走下面的加载 */ }
-    if (location.protocol.startsWith("http")) {
+    if (!window.SAP_STANDALONE && location.protocol.startsWith("http")) {
       try {
         const res = await fetch("bank.csv", { cache: "no-store" });
         if (res.ok) {
@@ -785,6 +788,7 @@
     on("b-grip", "onclick", () => { bankSess.showGrip = true; renderBank(); });
     on("b-reimport", "onclick", () => importBankFile(() => { buildBankList(); renderBank(); }));
     on("b-clear", "onclick", () => {
+      if (typeof window.SAP_BANK_CSV === "string") { alert("当前题库内嵌在 HTML 文件中，无法移除。"); return; }
       if (!confirm("从本机浏览器移除已导入的题库？（做题记录会保留）")) return;
       localStorage.removeItem(BANK_KEY);
       BANK = null;
@@ -827,14 +831,179 @@
     window.scrollTo(0, 0);
   }
 
+  // ---------------- 视图：速记（关键词 + 正确选项） ----------------
+  const LATIN = /[A-Za-z0-9][A-Za-z0-9\-.:/_]*/g;
+  const STOPWORDS = new Set(["aws", "amazon", "a", "an", "the", "to", "of", "and", "or", "in", "on", "for", "with", "by", "id", "api", "s3", "1", "2", "3"]);
+  const normWord = (w) => w.toLowerCase().replace(/\.+$/, "");
+
+  // 正确选项中出现、其他选项都没有的英文词（服务名、参数等）
+  function distinctRanges(q, letter) {
+    const others = new Set();
+    Object.entries(q.options).forEach(([l, v]) => {
+      if (l !== letter) (v.match(LATIN) || []).forEach((w) => others.add(normWord(w)));
+    });
+    const text = q.options[letter];
+    const ranges = [];
+    for (const m of text.matchAll(LATIN)) {
+      const w = normWord(m[0]);
+      if (!others.has(w) && !STOPWORDS.has(w)) ranges.push([m.index, m.index + m[0].length]);
+    }
+    return ranges;
+  }
+
+  function distinctPhrases(text, ranges) {
+    const phrases = [];
+    let cur = null;
+    ranges.forEach(([s, e]) => {
+      if (cur && s - cur[1] <= 2) cur[1] = e;
+      else { if (cur) phrases.push(cur); cur = [s, e]; }
+    });
+    if (cur) phrases.push(cur);
+    return [...new Set(phrases.map(([s, e]) => text.slice(s, e).replace(/\.+$/, "")))];
+  }
+
+  function markRanges(text, ranges) {
+    let out = "", pos = 0;
+    ranges.forEach(([s, e]) => {
+      out += esc(text.slice(pos, s)) + `<mark>${esc(text.slice(s, e))}</mark>`;
+      pos = e;
+    });
+    return out + esc(text.slice(pos));
+  }
+
+  const recall = Object.assign({ topic: "all", kind: "single", mode: "list", term: "", page: 0 }, state.bank.recallUi || {});
+  const RECALL_PAGE = 40;
+  const revealed = new Set();
+  const expanded = new Set();
+
+  function recallPool() {
+    const t = recall.term.trim().toLowerCase();
+    if (/^\d+$/.test(t)) return BANK.byId[t] && BANK.byId[t].answer.length ? [BANK.byId[t]] : [];
+    return BANK.list.filter((q) => {
+      if (!q.answer.length) return false;
+      if (recall.topic !== "all" && q.topic !== recall.topic) return false;
+      if (recall.kind === "single" && q.answer.length !== 1) return false;
+      if (recall.kind === "multi" && q.answer.length === 1) return false;
+      if (recall.kind === "unverified" && !q.unverified) return false;
+      if (recall.kind === "wrong" && !state.bank.wrong.includes(q.id)) return false;
+      if (!t) return true;
+      if (String(q.id) === t) return true;
+      const hay = [q.grip, q.hint, q.memo, ...q.answer.map((l) => q.options[l])].join(" ").toLowerCase();
+      return hay.includes(t);
+    });
+  }
+
+  function saveRecallUi() {
+    const { topic, kind, mode, term, page } = recall;
+    state.bank.recallUi = { topic, kind, mode, term, page };
+    save();
+  }
+
+  function recallItem(q) {
+    const show = recall.mode === "list" || revealed.has(q.id);
+    const answers = q.answer.map((l) => {
+      const ranges = distinctRanges(q, l);
+      return { l, text: q.options[l], ranges, keys: distinctPhrases(q.options[l], ranges) };
+    });
+    const keys = [...new Set(answers.flatMap((a) => a.keys))];
+    return `
+      <div class="panel recall-item" data-id="${q.id}">
+        <div class="recall-head">
+          <a class="chip" href="#/bank?id=${q.id}">#${q.id}</a>
+          <span class="pill">${esc(q.topic)}</span>
+          ${q.answer.length > 1 ? `<span class="pill">多选 ${q.answer.length} 项</span>` : ""}
+          ${q.unverified ? `<span class="pill warn">待核验</span>` : ""}
+        </div>
+        <div class="recall-grip">${esc(q.grip || q.memo || q.stem.slice(0, 60))}</div>
+        ${show ? `
+          ${q.hint ? `<div class="recall-hint"><span class="muted">答案联想：</span>${esc(q.hint)}</div>` : ""}
+          ${keys.length ? `<div class="recall-keys"><span class="muted">区分词（其他选项没有）：</span>${keys.map((k) => `<span class="key">${esc(k)}</span>`).join("")}</div>` : ""}
+          ${answers.map((a) => `<div class="recall-answer"><span class="letter">${a.l}</span><span>${markRanges(a.text, a.ranges)}</span></div>`).join("")}
+          ${q.unverified && q.note ? `<div class="warn-text small">核验备注：${esc(q.note)}</div>` : ""}
+          <button class="link-btn" data-expand="${q.id}">${expanded.has(q.id) ? "收起原题" : "展开原题和其他选项"}</button>
+          ${expanded.has(q.id) ? `
+            <div class="recall-full">
+              <div class="stem">${esc(q.stem)}</div>
+              ${Object.entries(q.options).map(([k, v]) => `<div class="recall-opt ${q.answer.includes(k) ? "ok" : ""}"><span class="letter">${k}</span><span>${esc(v)}</span></div>`).join("")}
+            </div>` : ""}`
+        : `<button class="btn" data-reveal="${q.id}">显示正确选项</button>`}
+      </div>`;
+  }
+
+  function renderRecall() {
+    if (!BANK) { renderBank(); return; }
+    const pool = recallPool();
+    const pages = Math.max(1, Math.ceil(pool.length / RECALL_PAGE));
+    recall.page = Math.min(recall.page, pages - 1);
+    const items = pool.slice(recall.page * RECALL_PAGE, (recall.page + 1) * RECALL_PAGE);
+    const opt = (v, label, cur) => `<option value="${v}" ${cur === v ? "selected" : ""}>${label}</option>`;
+    const pager = pages > 1 ? `
+      <div class="actions pager">
+        <button class="btn" data-page="-1" ${recall.page === 0 ? "disabled" : ""}>上一页</button>
+        <span class="muted">第 ${recall.page + 1} / ${pages} 页</span>
+        <button class="btn" data-page="1" ${recall.page >= pages - 1 ? "disabled" : ""}>下一页</button>
+      </div>` : "";
+
+    app.innerHTML = `
+      <h2>关键词 + 正确选项速记</h2>
+      <p class="muted">题目和选项固定成套出现：看到题干关键词，就认出正确选项。正确选项里其他选项都没有的英文服务名/参数已高亮，背这几个词即可在考场上锁定答案。</p>
+      <div class="toolbar">
+        <select id="r-kind">${opt("single", "单选", recall.kind)}${opt("multi", "多选", recall.kind)}${opt("all", "全部题型", recall.kind)}${opt("unverified", "仅待核验", recall.kind)}${opt("wrong", "真题错题", recall.kind)}</select>
+        <select id="r-topic">${opt("all", "全部主题", recall.topic)}${BANK.topics.map((t) => opt(t, t, recall.topic)).join("")}</select>
+        <select id="r-mode">${opt("list", "直接显示答案", recall.mode)}${opt("quiz", "自测（先遮住答案）", recall.mode)}</select>
+        <input type="search" id="r-term" placeholder="搜关键词、服务名或题号" value="${esc(recall.term)}" />
+        <span class="progress-text">共 ${pool.length} 题</span>
+      </div>
+      ${pager}
+      ${items.length ? items.map(recallItem).join("") : `<div class="panel empty">没有符合条件的题目</div>`}
+      ${pager}`;
+
+    const refilter = (key) => (e) => { recall[key] = e.target.value; recall.page = 0; revealed.clear(); saveRecallUi(); renderRecall(); };
+    document.getElementById("r-kind").onchange = refilter("kind");
+    document.getElementById("r-topic").onchange = refilter("topic");
+    document.getElementById("r-mode").onchange = refilter("mode");
+    const term = document.getElementById("r-term");
+    let timer = null;
+    term.oninput = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        recall.term = term.value; recall.page = 0; saveRecallUi(); renderRecall();
+        const el = document.getElementById("r-term");
+        el.focus(); el.setSelectionRange(el.value.length, el.value.length);
+      }, 300);
+    };
+    app.querySelectorAll("[data-page]").forEach((b) => {
+      b.onclick = () => { recall.page += Number(b.dataset.page); saveRecallUi(); renderRecall(); window.scrollTo(0, 0); };
+    });
+    app.querySelectorAll("[data-reveal]").forEach((b) => { b.onclick = () => rerenderRecallItem(Number(b.dataset.reveal), () => revealed.add(Number(b.dataset.reveal))); });
+    app.querySelectorAll("[data-expand]").forEach((b) => {
+      b.onclick = () => rerenderRecallItem(Number(b.dataset.expand), (id) => { expanded.has(id) ? expanded.delete(id) : expanded.add(id); });
+    });
+  }
+
+  function rerenderRecallItem(id, mutate) {
+    mutate(id);
+    const el = app.querySelector(`.recall-item[data-id="${id}"]`);
+    if (!el) return;
+    const tmp = document.createElement("div");
+    tmp.innerHTML = recallItem(BANK.byId[id]);
+    const fresh = tmp.firstElementChild;
+    el.replaceWith(fresh);
+    fresh.querySelectorAll("[data-reveal]").forEach((b) => { b.onclick = () => rerenderRecallItem(id, () => revealed.add(id)); });
+    fresh.querySelectorAll("[data-expand]").forEach((b) => {
+      b.onclick = () => rerenderRecallItem(id, () => { expanded.has(id) ? expanded.delete(id) : expanded.add(id); });
+    });
+  }
+
   // ---------------- 路由与快捷键 ----------------
   let currentView = "home";
   function route() {
     const [view, query] = (location.hash.replace(/^#\//, "") || "home").split("?");
-    currentView = ["home", "method", "bank", "cards", "quiz", "wrong", "keywords"].includes(view) ? view : "home";
+    currentView = ["home", "method", "recall", "bank", "cards", "quiz", "wrong", "keywords"].includes(view) ? view : "home";
     document.querySelectorAll("#tabs a").forEach((a) => a.classList.toggle("active", a.dataset.view === currentView));
     if (currentView === "home") renderHome();
     if (currentView === "method") renderMethod();
+    if (currentView === "recall") renderRecall();
     if (currentView === "bank") {
       const id = Number(new URLSearchParams(query || "").get("id"));
       if (id && openBankQuestion(id)) saveBankUi();

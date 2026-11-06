@@ -298,6 +298,39 @@ details { margin-top: 10px; }
 summary { cursor: pointer; color: var(--muted); }
 code { background: var(--panel-2); padding: 1px 6px; border-radius: 4px; }
 
+.recall-item { padding: 16px 20px; }
+.recall-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.recall-grip { font-size: 16px; font-weight: 600; margin: 10px 0 8px; }
+.recall-keys { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
+.key {
+  padding: 2px 10px;
+  border-radius: 6px;
+  background: rgba(255, 153, 0, 0.18);
+  color: var(--accent-2);
+  font-weight: 600;
+}
+.recall-hint { margin-bottom: 6px; }
+.recall-answer, .recall-opt {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  margin-top: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--ok);
+  background: rgba(47, 191, 113, 0.1);
+}
+.recall-opt { border-color: var(--border); background: var(--panel-2); }
+.recall-opt.ok { border-color: var(--ok); }
+.recall-answer .letter, .recall-opt .letter { flex: none; font-weight: 700; color: var(--ok); }
+.recall-answer mark { background: rgba(255, 153, 0, 0.35); color: inherit; border-radius: 3px; padding: 0 2px; }
+.recall-full { margin-top: 8px; }
+.recall-full .stem { font-size: 14px; margin: 8px 0; }
+.link-btn { background: none; border: none; color: var(--muted); padding: 8px 0 0; font: inherit; font-size: 13px; cursor: pointer; }
+.link-btn:hover { color: var(--accent-2); }
+.small { font-size: 13px; margin-top: 6px; }
+.pager { justify-content: center; align-items: center; margin: 0 0 16px; }
+
 @media (max-width: 600px) {
   .container { padding: 16px; }
   .topbar { padding: 10px 16px; }
