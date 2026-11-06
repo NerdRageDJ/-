@@ -374,6 +374,9 @@ code { background: var(--panel-2); padding: 1px 6px; border-radius: 4px; }
     进度保存在本机浏览器（localStorage）。快捷键：闪卡 <kbd>空格</kbd> 翻面，<kbd>1</kbd>/<kbd>2</kbd>/<kbd>3</kbd> 评分；练习与真题库 <kbd>A</kbd>–<kbd>F</kbd> 选择，<kbd>Enter</kbd> 提交/下一题，真题库 <kbd>H</kbd> 看抓手、<kbd>←</kbd>/<kbd>→</kbd> 翻题。
   </footer>
   <script>
+window.SAP_STANDALONE = true;
+</script>
+  <script>
 window.SAP_DATA = {
   domains: {
     d1: { name: "复杂组织的解决方案设计", weight: 26 },
@@ -1741,7 +1744,7 @@ window.SAP_BANK_CSV = "﻿\"原题号\",\"关联记忆短句\",\"题型\",\"主�
       const cached = localStorage.getItem(BANK_KEY);
       if (cached) { setBank(JSON.parse(cached)); return; }
     } catch (_) { /* 缓存损坏时忽略，走下面的加载 */ }
-    if (location.protocol.startsWith("http")) {
+    if (!window.SAP_STANDALONE && location.protocol.startsWith("http")) {
       try {
         const res = await fetch("bank.csv", { cache: "no-store" });
         if (res.ok) {

@@ -604,7 +604,7 @@
       const cached = localStorage.getItem(BANK_KEY);
       if (cached) { setBank(JSON.parse(cached)); return; }
     } catch (_) { /* 缓存损坏时忽略，走下面的加载 */ }
-    if (location.protocol.startsWith("http")) {
+    if (!window.SAP_STANDALONE && location.protocol.startsWith("http")) {
       try {
         const res = await fetch("bank.csv", { cache: "no-store" });
         if (res.ok) {
