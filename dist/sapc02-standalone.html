@@ -1,0 +1,1996 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SAP-C02 背考助手</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23ff9900'/></svg>" />
+  <style>
+:root {
+  --bg: #0f1420;
+  --panel: #171e2e;
+  --panel-2: #1f2840;
+  --border: #2a3550;
+  --text: #e6ebf5;
+  --muted: #93a0bb;
+  --accent: #ff9900;
+  --accent-2: #ffb84d;
+  --ok: #2fbf71;
+  --warn: #f2c94c;
+  --bad: #eb5757;
+  --radius: 12px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.65 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: rgba(15, 20, 32, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), #e57a00);
+  color: #111;
+  font-weight: 800;
+}
+.title { font-weight: 700; font-size: 17px; }
+.subtitle { color: var(--muted); font-size: 12px; }
+
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tabs a {
+  color: var(--muted);
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+}
+.tabs a:hover { color: var(--text); background: var(--panel); }
+.tabs a.active { color: #111; background: var(--accent); font-weight: 600; }
+
+.container { max-width: 960px; margin: 0 auto; padding: 24px; }
+
+.footer {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 8px 24px 32px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+kbd {
+  display: inline-block;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--panel);
+  font-size: 12px;
+}
+
+h2 { margin: 0 0 16px; font-size: 20px; }
+h3 { margin: 0 0 8px; font-size: 16px; }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+
+.stat .num { font-size: 28px; font-weight: 700; color: var(--accent-2); }
+.stat .label { color: var(--muted); font-size: 13px; }
+
+.domain-row { margin-bottom: 14px; }
+.domain-row .head { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 4px; }
+.domain-row .head span:last-child { color: var(--muted); }
+
+.bar { height: 8px; background: var(--panel-2); border-radius: 999px; overflow: hidden; display: flex; }
+.bar > i { display: block; height: 100%; }
+.bar .ok { background: var(--ok); }
+.bar .mid { background: var(--warn); }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+
+select, input[type="search"] {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font: inherit;
+}
+input[type="search"] { flex: 1; min-width: 200px; }
+
+.btn {
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  padding: 9px 16px;
+  border-radius: 8px;
+  font: inherit;
+  cursor: pointer;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: #111; border-color: var(--accent); font-weight: 600; }
+.btn.primary:hover { background: var(--accent-2); }
+.btn.bad { border-color: var(--bad); color: #ffb3b3; }
+.btn.mid { border-color: var(--warn); color: #ffe7a3; }
+.btn.ok { border-color: var(--ok); color: #a8f0c8; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.pill {
+  display: inline-block;
+  font-size: 12px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  margin-right: 6px;
+}
+.pill.domain { color: var(--accent-2); border-color: #5a4320; }
+
+.flashcard {
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  user-select: none;
+}
+.flashcard .q { font-size: 19px; font-weight: 600; margin: 12px 0; }
+.flashcard .a {
+  border-top: 1px dashed var(--border);
+  padding-top: 14px;
+  margin-top: 8px;
+  white-space: pre-wrap;
+}
+.flashcard .hint { color: var(--muted); font-size: 13px; margin-top: auto; }
+
+.grade { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+.progress-text { color: var(--muted); font-size: 13px; margin-left: auto; }
+
+.stem { font-size: 16px; margin: 10px 0 16px; }
+.options { display: grid; gap: 10px; }
+.option {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  text-align: left;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.option:hover:not(:disabled) { border-color: var(--accent); }
+.option .letter {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: var(--panel);
+  font-weight: 700;
+}
+.option.selected { border-color: var(--accent); background: #2b2a2a; }
+.option.correct { border-color: var(--ok); background: rgba(47, 191, 113, 0.12); }
+.option.wrong { border-color: var(--bad); background: rgba(235, 87, 87, 0.12); }
+.option:disabled { cursor: default; }
+
+.explain {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--panel-2);
+  border-left: 4px solid var(--accent);
+}
+.explain.ok { border-left-color: var(--ok); }
+.explain.bad { border-left-color: var(--bad); }
+
+.actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
+
+.kw-table { width: 100%; border-collapse: collapse; }
+.kw-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.kw-table td:first-child { color: var(--accent-2); width: 40%; font-weight: 600; }
+.kw-table mark { background: rgba(255, 153, 0, 0.35); color: inherit; border-radius: 3px; }
+
+.list-item { padding: 14px 0; border-bottom: 1px solid var(--border); }
+.list-item:last-child { border-bottom: none; }
+.muted { color: var(--muted); }
+.empty { text-align: center; color: var(--muted); padding: 40px 0; }
+
+.score { font-size: 42px; font-weight: 800; color: var(--accent-2); }
+
+.start { border-color: #5a4320; background: linear-gradient(135deg, #1f1a12, var(--panel)); }
+.notice { border-color: #5a4320; }
+
+.toc {
+  position: sticky;
+  top: 72px;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 0;
+  margin-bottom: 8px;
+  background: var(--bg);
+}
+.toc a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.toc a:hover { color: var(--text); border-color: var(--accent); }
+
+section { scroll-margin-top: 130px; }
+a { color: var(--accent-2); }
+
+.steps { margin: 0; padding-left: 20px; }
+.steps li { margin-bottom: 12px; }
+.steps li div { color: var(--muted); }
+
+.seg { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+.seg .btn { padding: 6px 12px; }
+
+.tip p { margin: 8px 0; }
+.tip.done { opacity: 0.6; }
+.tip-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tip-head h3 { margin: 0; flex: 1; min-width: 200px; }
+.done-toggle { color: var(--muted); font-size: 13px; cursor: pointer; white-space: nowrap; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
+.chip {
+  font-size: 12px;
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--accent-2);
+  text-decoration: none;
+}
+.chip:hover { border-color: var(--accent); }
+.chip.warn { color: var(--warn); border-style: dashed; }
+
+.domain-block { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.domain-block:last-child { border-bottom: none; }
+.domain-block ol { margin: 8px 0; padding-left: 20px; }
+
+.kw-table.duel td:first-child { width: 30%; }
+.pitfalls { margin: 0; padding-left: 20px; }
+.pitfalls li { margin-bottom: 6px; }
+
+.pill.warn { color: var(--warn); border-color: #6b5a1f; }
+.warn-text { color: #ffe7a3; }
+.grip-line {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 153, 0, 0.08);
+  border: 1px dashed #5a4320;
+}
+.explain > div { margin-top: 8px; }
+details { margin-top: 10px; }
+summary { cursor: pointer; color: var(--muted); }
+code { background: var(--panel-2); padding: 1px 6px; border-radius: 4px; }
+
+@media (max-width: 600px) {
+  .container { padding: 16px; }
+  .topbar { padding: 10px 16px; }
+  .grade { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">C02</span>
+      <div>
+        <div class="title">SAP-C02 背考助手</div>
+        <div class="subtitle">AWS Certified Solutions Architect – Professional</div>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <a href="#/home" data-view="home">概览</a>
+      <a href="#/method" data-view="method">方法论</a>
+      <a href="#/bank" data-view="bank">真题库</a>
+      <a href="#/cards" data-view="cards">闪卡</a>
+      <a href="#/quiz" data-view="quiz">练习题</a>
+      <a href="#/wrong" data-view="wrong">错题本</a>
+      <a href="#/keywords" data-view="keywords">关键词速查</a>
+    </nav>
+  </header>
+
+  <main id="app" class="container"></main>
+
+  <footer class="footer">
+    进度保存在本机浏览器（localStorage）。快捷键：闪卡 <kbd>空格</kbd> 翻面，<kbd>1</kbd>/<kbd>2</kbd>/<kbd>3</kbd> 评分；练习与真题库 <kbd>A</kbd>–<kbd>F</kbd> 选择，<kbd>Enter</kbd> 提交/下一题，真题库 <kbd>H</kbd> 看抓手、<kbd>←</kbd>/<kbd>→</kbd> 翻题。
+  </footer>
+  <script>
+window.SAP_DATA = {
+  domains: {
+    d1: { name: "复杂组织的解决方案设计", weight: 26 },
+    d2: { name: "新解决方案设计", weight: 29 },
+    d3: { name: "现有解决方案的持续改进", weight: 25 },
+    d4: { name: "加速工作负载迁移与现代化", weight: 20 },
+  },
+
+  cards: [
+    // ---------- 领域 1：复杂组织 ----------
+    { id: "c001", d: "d1", tags: ["Organizations", "SCP"],
+      q: "SCP（服务控制策略）能授予权限吗？对管理账户生效吗？",
+      a: "不能授予，只设定权限上限（护栏）；最终权限 = IAM 策略 ∩ SCP。SCP 对管理账户（Management Account）不生效，也不影响服务关联角色。" },
+    { id: "c002", d: "d1", tags: ["Organizations", "SCP"],
+      q: "想禁止成员账户离开组织、关闭 CloudTrail、或在未批准的区域创建资源，用什么？",
+      a: "在 OU/根上挂 SCP：Deny organizations:LeaveOrganization、Deny cloudtrail:StopLogging/DeleteTrail，以及基于 aws:RequestedRegion 条件的区域限制 Deny（注意给全局服务如 IAM、CloudFront、Route 53 留例外）。" },
+    { id: "c003", d: "d1", tags: ["Control Tower"],
+      q: "AWS Control Tower 提供了什么？",
+      a: "多账户 Landing Zone 自动化：创建 Log Archive 与 Audit 账户、Account Factory（基于 Service Catalog）开户、预防性控制（SCP）、检测性控制（Config 规则）、主动控制（CloudFormation Hooks），以及合规仪表板。" },
+    { id: "c004", d: "d1", tags: ["IAM Identity Center"],
+      q: "多账户统一登录、对接企业 AD / 外部 IdP（Okta、Entra ID）的首选方案？",
+      a: "IAM Identity Center（原 AWS SSO）：在组织管理账户（或委派管理员账户）启用，用权限集（Permission Set）分配到账户；身份源可选内置目录、AD Connector / AWS Managed Microsoft AD，或通过 SAML 2.0 + SCIM 对接外部 IdP。" },
+    { id: "c005", d: "d1", tags: ["RAM"],
+      q: "AWS RAM 可以共享哪些常考资源？",
+      a: "VPC 子网（共享 VPC）、Transit Gateway、Route 53 Resolver 规则、License Manager 配置、Aurora 数据库集群（克隆）、Network Firewall 策略、Prefix List、IPAM 池等。共享子网时参与账户可在其中创建资源，但不能修改 VPC。" },
+    { id: "c006", d: "d1", tags: ["网络", "Transit Gateway"],
+      q: "上百个 VPC + 本地数据中心互联，避免 VPC Peering 网状结构，用什么？",
+      a: "Transit Gateway（区域级中心辐射路由器），可通过 RAM 跨账户共享；用多个路由表实现隔离（如生产/开发分段）；跨区域使用 TGW Peering；本地通过 Direct Connect Gateway（Transit VIF）或 Site-to-Site VPN 接入。" },
+    { id: "c007", d: "d1", tags: ["网络", "VPC Peering"],
+      q: "VPC Peering 的关键限制有哪些？",
+      a: "不支持传递路由（A-B、B-C 不代表 A-C）；CIDR 不能重叠；不支持边缘到边缘路由（不能借对端的 IGW/VPN/DX）。优点：无带宽瓶颈、无额外小时费、延迟低。" },
+    { id: "c008", d: "d1", tags: ["网络", "Direct Connect"],
+      q: "Direct Connect 的三种虚拟接口（VIF）分别做什么？",
+      a: "Private VIF：连接单个 VGW 或 DX Gateway（访问 VPC 私有 IP）；Public VIF：访问 AWS 公共端点（S3、DynamoDB 等公网 IP）；Transit VIF：连接 DX Gateway，再关联 Transit Gateway。" },
+    { id: "c009", d: "d1", tags: ["网络", "Direct Connect"],
+      q: "Direct Connect 本身加密吗？如何实现加密和高可用？",
+      a: "默认不加密。加密：在 DX 上跑 Site-to-Site VPN（Public VIF 或 Transit VIF 上的私有 IP VPN），或在支持的 10/100G 专用连接上使用 MACsec。最高弹性：两个 DX 位置 × 每个位置两条独立连接；经济型备份：DX + VPN 备份。" },
+    { id: "c010", d: "d1", tags: ["网络", "DNS"],
+      q: "本地 DNS 需要解析 AWS 私有托管区记录，AWS 需要解析本地域名，怎么做？",
+      a: "Route 53 Resolver：入站端点（Inbound Endpoint）让本地 DNS 转发到 AWS；出站端点（Outbound Endpoint）+ 转发规则让 VPC 解析本地域名。转发规则可通过 RAM 共享给其他账户的 VPC。" },
+    { id: "c011", d: "d1", tags: ["网络", "PrivateLink"],
+      q: "向数百个消费者 VPC 暴露一个服务，且 CIDR 可能重叠，用什么？",
+      a: "AWS PrivateLink：服务端用 NLB（或 GWLB）建立 Endpoint Service，消费者创建接口终端节点。单向访问、无需路由、容忍 CIDR 重叠。" },
+    { id: "c012", d: "d1", tags: ["网络", "VPC Endpoint"],
+      q: "Gateway Endpoint 与 Interface Endpoint 的区别？",
+      a: "Gateway Endpoint 仅支持 S3 和 DynamoDB，通过路由表生效、免费，但本地/对等 VPC 无法经它访问。Interface Endpoint（PrivateLink）是子网内的 ENI，按小时+流量收费，可从本地（经 DX/VPN）和对等网络访问。" },
+    { id: "c013", d: "d1", tags: ["安全", "集中审计"],
+      q: "组织范围内集中收集日志、汇总安全发现，常见组合是什么？",
+      a: "组织级 CloudTrail Trail 写入 Log Archive 账户的 S3（配合 S3 Object Lock 防篡改）；GuardDuty / Security Hub / Macie / Inspector / Config 聚合器使用委派管理员（Delegated Administrator）放在 Audit/Security 账户。" },
+    { id: "c014", d: "d1", tags: ["成本", "Organizations"],
+      q: "多账户如何管理成本与分摊？",
+      a: "整合账单（Consolidated Billing）共享 RI/Savings Plans 折扣与阶梯价；成本分配标签（Cost Allocation Tags）需在管理账户中激活；可用 Tag Policies 强制标签规范；AWS Budgets + Budget Actions 自动响应；Cost Anomaly Detection 识别异常。" },
+    { id: "c015", d: "d1", tags: ["IAM", "跨账户"],
+      q: "第三方 SaaS 需要访问你的账户，如何防止“混淆代理”问题？",
+      a: "创建跨账户 IAM 角色，信任策略中指定第三方账户 ID，并加 Condition sts:ExternalId（由第三方为每个客户生成的唯一值）。" },
+    { id: "c016", d: "d1", tags: ["IAM", "权限边界"],
+      q: "允许开发者自己创建 IAM 角色，但不能借此提权，怎么做？",
+      a: "使用权限边界（Permissions Boundary）：要求开发者创建的角色必须附加指定的边界策略（通过 iam:PermissionsBoundary 条件强制），有效权限 = 身份策略 ∩ 边界。" },
+
+    // ---------- 领域 2：新方案设计 ----------
+    { id: "c101", d: "d2", tags: ["DR"],
+      q: "四种灾难恢复策略按 RTO/RPO 和成本排序？",
+      a: "备份与还原（小时级，最便宜）→ 指示灯 Pilot Light（核心数据实时复制、计算关闭，数十分钟）→ 温备 Warm Standby（缩小规模的完整环境一直运行，分钟级）→ 多站点主动/主动（接近零，最贵）。" },
+    { id: "c102", d: "d2", tags: ["DR", "Aurora"],
+      q: "Aurora Global Database 的 RPO / RTO 大致是多少？",
+      a: "跨区域存储级复制，典型延迟 < 1 秒，RPO 约 1 秒，计划外故障切换（托管或手动提升）RTO 约 1 分钟级；最多 5 个次要区域，次要区域可提供只读。也支持写转发（Write Forwarding）。" },
+    { id: "c103", d: "d2", tags: ["DR", "DynamoDB"],
+      q: "DynamoDB 多区域主动/主动写入用什么？",
+      a: "DynamoDB Global Tables：多区域多主复制，最后写入者获胜（Last Writer Wins）冲突解决，通常秒级复制延迟。需启用 DynamoDB Streams（新版本自动处理）。" },
+    { id: "c104", d: "d2", tags: ["DR", "Elastic Disaster Recovery"],
+      q: "本地或其他云的服务器以最低成本实现分钟级 RTO、秒级 RPO 的 DR？",
+      a: "AWS Elastic Disaster Recovery（DRS）：块级持续复制到 AWS 低成本暂存区，故障时启动恢复实例，RPO 秒级、RTO 分钟级，也支持故障回切。" },
+    { id: "c105", d: "d2", tags: ["Route 53"],
+      q: "Route 53 路由策略都有哪些，各自适用场景？",
+      a: "简单；加权（灰度/蓝绿）；基于延迟（最低延迟区域）；故障转移（主备 + 健康检查）；地理位置（按用户所在地，合规/本地化）；地理邻近（可用 bias 调整，需 Traffic Flow）；多值应答（最多 8 个健康记录）；基于 IP（按客户端 CIDR）。" },
+    { id: "c106", d: "d2", tags: ["Global Accelerator", "CloudFront"],
+      q: "Global Accelerator 与 CloudFront 怎么选？",
+      a: "CloudFront：HTTP(S) 内容缓存与边缘计算。Global Accelerator：TCP/UDP 加速，提供 2 个静态 Anycast IP，秒级区域故障转移，适合游戏、IoT、VoIP、需要固定 IP 白名单的非 HTTP 场景。" },
+    { id: "c107", d: "d2", tags: ["存储", "S3"],
+      q: "S3 存储类别按访问频率怎么选？",
+      a: "Standard（频繁）；Intelligent-Tiering（访问模式未知/变化）；Standard-IA 与 One Zone-IA（不频繁，后者单 AZ 可重建数据）；Glacier Instant Retrieval（季度访问、毫秒取回）；Glacier Flexible Retrieval（分钟到小时）；Glacier Deep Archive（12–48 小时，最便宜，长期合规归档）。" },
+    { id: "c108", d: "d2", tags: ["存储", "S3"],
+      q: "需要 WORM（一次写入多次读取）合规存储，且连 root 都不能删？",
+      a: "S3 Object Lock 合规模式（Compliance Mode）+ 保留期；治理模式（Governance Mode）允许有特殊权限的用户绕过。另有 Legal Hold（无期限）。Glacier 可用 Vault Lock。" },
+    { id: "c109", d: "d2", tags: ["存储", "共享文件系统"],
+      q: "EFS、FSx for Windows、FSx for Lustre、FSx for NetApp ONTAP 怎么选？",
+      a: "EFS：Linux NFS 共享、弹性扩展。FSx for Windows：SMB、AD 集成、DFS。FSx for Lustre：HPC/ML 高吞吐，可与 S3 关联。FSx for NetApp ONTAP：多协议（NFS/SMB/iSCSI）、快照/SnapMirror，适合从本地 NetApp 迁移。FSx for OpenZFS：从 ZFS 迁移。" },
+    { id: "c110", d: "d2", tags: ["数据库"],
+      q: "数据库选型速记？",
+      a: "关系型 OLTP：RDS / Aurora；键值超大规模毫秒级：DynamoDB（DAX 微秒缓存）；缓存/会话：ElastiCache（Redis/Valkey/Memcached）；文档：DocumentDB；图：Neptune；时序：Timestream；账本不可篡改：QLDB（已宣布停用，新方案用 Aurora PostgreSQL 审计）；宽列 Cassandra：Keyspaces；数仓：Redshift。" },
+    { id: "c111", d: "d2", tags: ["解耦", "消息"],
+      q: "SQS、SNS、EventBridge、Kinesis 怎么区分？",
+      a: "SQS：点对点队列，解耦削峰（FIFO 保证顺序和恰好一次）。SNS：发布订阅扇出。EventBridge：基于规则的事件总线，支持 SaaS 事件源、跨账户、Schema、重放与 Pipes。Kinesis Data Streams：实时流、有序分片、多消费者重放。" },
+    { id: "c112", d: "d2", tags: ["计算", "无服务器"],
+      q: "Lambda 关键限制？",
+      a: "最长运行 15 分钟；内存 128 MB–10 GB（CPU 按比例）；/tmp 最高 10 GB；同步负载 6 MB；默认区域并发 1000（可提额）。冷启动可用预置并发或 SnapStart（Java/Python/.NET）。超过 15 分钟的任务改用 Step Functions、ECS/Fargate 或 Batch。" },
+    { id: "c113", d: "d2", tags: ["计算", "容器"],
+      q: "ECS on EC2、Fargate、EKS 怎么选？",
+      a: "Fargate：无需管理服务器，按任务计费。ECS on EC2：需要 GPU、特定实例类型或更低成本（配合 Spot/RI）。EKS：需要 Kubernetes 生态/可移植性；EKS Anywhere / ECS Anywhere 用于本地。" },
+    { id: "c114", d: "d2", tags: ["编排", "Step Functions"],
+      q: "Step Functions 标准与快速工作流的区别？",
+      a: "标准：最长 1 年，恰好一次执行，按状态转换计费，适合长流程/人工审批。快速（Express）：最长 5 分钟，至少一次，按执行和时长计费，适合高吞吐事件处理。" },
+    { id: "c115", d: "d2", tags: ["安全", "加密"],
+      q: "KMS 与 CloudHSM 什么时候选后者？",
+      a: "需要单租户、客户独占控制的 FIPS 140-2/3 Level 3 HSM，或需要 PKCS#11/JCE/CNG 等标准接口、SSL 卸载、TDE 时选 CloudHSM。也可作为 KMS 自定义密钥存储（Custom Key Store）。普通场景选 KMS。" },
+    { id: "c116", d: "d2", tags: ["安全", "加密"],
+      q: "KMS 跨区域与跨账户的要点？",
+      a: "跨账户：密钥策略中授权对方账户 + 对方 IAM 策略也要允许。跨区域：使用多区域密钥（Multi-Region Keys），同一密钥 ID 和材料可在多区域复制，便于全局表或跨区域加密数据解密。" },
+    { id: "c117", d: "d2", tags: ["安全", "边界防护"],
+      q: "防御 DDoS 和 Web 攻击的组合？",
+      a: "Shield Standard（免费，L3/L4）；Shield Advanced（DRT 支持、成本保护、L7 自动缓解）；WAF（SQLi/XSS、速率限制、托管规则、Bot Control）挂在 CloudFront / ALB / API Gateway / AppSync；Firewall Manager 在组织内统一下发 WAF/Shield/安全组/Network Firewall 策略。" },
+    { id: "c118", d: "d2", tags: ["安全", "机密管理"],
+      q: "Secrets Manager 与 Parameter Store 区别？",
+      a: "Secrets Manager：内置自动轮换（RDS/Redshift/DocumentDB 等原生支持，Lambda 自定义轮换）、跨区域复制，收费。Parameter Store：配置与简单机密存储，标准层免费，无原生轮换。" },
+    { id: "c119", d: "d2", tags: ["数据分析"],
+      q: "S3 数据湖上的查询与治理组合？",
+      a: "Glue 爬网程序 + Data Catalog 建元数据；Athena 无服务器 SQL；Redshift Spectrum 从数仓查 S3；Lake Formation 提供表/列/行级权限与跨账户共享；EMR 用于大规模 Spark/Hadoop；QuickSight 可视化。" },
+    { id: "c120", d: "d2", tags: ["API"],
+      q: "API Gateway 的 REST API、HTTP API、WebSocket API 怎么选？",
+      a: "HTTP API：更便宜、更低延迟，支持 JWT/OIDC 授权。REST API：功能全（API Key、使用计划、请求校验、WAF、私有 API、缓存）。WebSocket API：双向实时通信（聊天、推送）。" },
+
+    // ---------- 领域 3：持续改进 ----------
+    { id: "c201", d: "d3", tags: ["成本", "购买选项"],
+      q: "Savings Plans 与 Reserved Instances 怎么选？",
+      a: "Compute Savings Plans：最灵活，覆盖 EC2（任意族/区域/OS）、Fargate、Lambda。EC2 Instance Savings Plans：锁定区域+实例族，折扣更高。标准 RI 折扣高但灵活性低；可转换 RI 可换族。RDS、ElastiCache、Redshift、OpenSearch 等仍需对应的预留节点/实例。" },
+    { id: "c202", d: "d3", tags: ["成本", "Spot"],
+      q: "Spot 实例适用场景与中断处理？",
+      a: "适合无状态、可中断、容错的工作负载（批处理、CI、大数据、容器）。2 分钟中断通知（EventBridge / 实例元数据）；配合 Auto Scaling 混合实例策略、容量再平衡、price-capacity-optimized 分配策略分散到多种实例类型。" },
+    { id: "c203", d: "d3", tags: ["成本", "优化工具"],
+      q: "找出闲置/过度配置资源的工具？",
+      a: "Compute Optimizer（EC2、EBS、Lambda、ECS on Fargate、RDS 规格建议）；Trusted Advisor（成本、安全、容错、性能、服务配额检查）；Cost Explorer（RI/SP 购买建议与使用率）；Cost Optimization Hub 汇总建议。" },
+    { id: "c204", d: "d3", tags: ["性能", "缓存"],
+      q: "读密集型数据库负载过高，有哪些缓解手段？",
+      a: "增加只读副本（RDS 最多 15 个，Aurora 15 个）；ElastiCache 旁路缓存（Lazy Loading）或写穿（Write-through）；DynamoDB 用 DAX；前端用 CloudFront 缓存；使用 RDS Proxy 缓解连接风暴（尤其 Lambda 场景）。" },
+    { id: "c205", d: "d3", tags: ["可靠性", "数据库"],
+      q: "Lambda 大量并发连接压垮 RDS，最佳方案？",
+      a: "RDS Proxy：连接池复用、减少故障转移时间（最多降低约 66%），支持 IAM 认证和 Secrets Manager 凭证。" },
+    { id: "c206", d: "d3", tags: ["运维", "Systems Manager"],
+      q: "Systems Manager 常考功能？",
+      a: "Session Manager（无需堡垒机/SSH 端口登录，日志到 S3/CloudWatch）；Patch Manager + 维护时段；Run Command；State Manager；Automation 运行手册（可被 Config 修复调用）；Parameter Store；Inventory；OpsCenter；Change Manager。" },
+    { id: "c207", d: "d3", tags: ["合规", "Config"],
+      q: "检测到不合规资源后自动修复，怎么设计？",
+      a: "AWS Config 规则（托管或自定义）+ 修复操作（SSM Automation 文档），可设为自动修复；组织范围使用 Conformance Packs 与组织 Config 规则；也可通过 EventBridge 触发 Lambda。" },
+    { id: "c208", d: "d3", tags: ["部署", "CI/CD"],
+      q: "部署策略：In-place、滚动、蓝绿、金丝雀的区别？",
+      a: "In-place：原地更新，有停机风险。滚动：分批替换。蓝绿：新旧两套环境，切流量（Route 53 加权 / ALB / CodeDeploy），回滚快。金丝雀/线性：先切小比例流量（CodeDeploy 支持 Lambda、ECS），配合 CloudWatch 告警自动回滚。" },
+    { id: "c209", d: "d3", tags: ["监控", "可观测性"],
+      q: "分布式应用的端到端追踪与监控工具？",
+      a: "X-Ray（追踪与服务地图，可用 ADOT/OpenTelemetry）；CloudWatch ServiceLens / Application Signals；CloudWatch Synthetics（金丝雀脚本模拟用户）；RUM（真实用户监控）；Container Insights / Lambda Insights；Logs Insights 查询日志。" },
+    { id: "c210", d: "d3", tags: ["可靠性", "Auto Scaling"],
+      q: "EC2 Auto Scaling 的扩缩策略有哪些？",
+      a: "目标跟踪（如 CPU 50%，最推荐）；步进扩缩；简单扩缩；计划扩缩（已知高峰）；预测扩缩（基于历史 ML 预测）。可配合预热池（Warm Pools）缩短启动时间，生命周期挂钩做初始化/清理。" },
+    { id: "c211", d: "d3", tags: ["安全", "威胁检测"],
+      q: "GuardDuty、Inspector、Macie、Detective、Security Hub 各干什么？",
+      a: "GuardDuty：基于 CloudTrail/VPC 流日志/DNS 日志等的威胁检测。Inspector：EC2/ECR 镜像/Lambda 漏洞扫描。Macie：S3 敏感数据（PII）发现。Detective：安全事件调查与根因分析。Security Hub：汇总发现与合规基准（CIS、FSBP）。" },
+    { id: "c212", d: "d3", tags: ["性能", "存储"],
+      q: "EBS 卷类型怎么选？",
+      a: "gp3：通用默认，IOPS/吞吐可独立配置，比 gp2 便宜。io2 Block Express：最高 256,000 IOPS、亚毫秒延迟，关键数据库，支持多重挂载。st1：吞吐优化 HDD（大数据、日志）。sc1：冷 HDD 最便宜。HDD 不能作启动卷。" },
+    { id: "c213", d: "d3", tags: ["可靠性", "弹性"],
+      q: "如何验证架构在故障下的韧性？",
+      a: "AWS Fault Injection Service（FIS）做混沌实验；AWS Resilience Hub 根据 RTO/RPO 目标评估应用韧性并给出建议；Route 53 ARC（应用恢复控制器）做区域级就绪检查与路由控制、可用区转移（Zonal Shift）。" },
+    { id: "c214", d: "d3", tags: ["S3", "性能"],
+      q: "S3 上传/下载性能优化？",
+      a: "分段上传（>100 MB 推荐，>5 GB 必须）；字节范围并行下载；S3 Transfer Acceleration 远距离上传；前缀并行（每前缀 3500 PUT / 5500 GET 每秒）；S3 Express One Zone 获得个位数毫秒延迟。" },
+
+    // ---------- 领域 4：迁移与现代化 ----------
+    { id: "c301", d: "d4", tags: ["迁移策略"],
+      q: "迁移的 7R 策略分别是什么？",
+      a: "Retire（下线）、Retain（保留）、Rehost（直接迁移/lift-and-shift）、Relocate（如 VMware Cloud on AWS 整体搬迁）、Repurchase（换成 SaaS）、Replatform（小改造，如迁到 RDS/Elastic Beanstalk）、Refactor/Re-architect（重构为云原生）。" },
+    { id: "c302", d: "d4", tags: ["迁移发现"],
+      q: "迁移前如何发现本地服务器及其依赖关系？",
+      a: "AWS Application Discovery Service：无代理（Agentless Collector，针对 VMware vCenter）或基于代理（Discovery Agent，可采集进程与网络连接依赖）；数据汇入 Migration Hub。也可用 Migration Evaluator 做 TCO 业务论证。" },
+    { id: "c303", d: "d4", tags: ["服务器迁移"],
+      q: "大规模服务器直接迁移（Rehost）的首选工具？",
+      a: "AWS Application Migration Service（MGN）：块级持续复制，测试启动后切换，停机时间分钟级。支持物理机、VMware、Hyper-V 及其他云。（SMS 已停用）" },
+    { id: "c304", d: "d4", tags: ["数据库迁移"],
+      q: "异构数据库迁移（如 Oracle → Aurora PostgreSQL）怎么做？",
+      a: "先用 AWS SCT（Schema Conversion Tool）或 DMS Schema Conversion 转换模式与代码，再用 DMS 完成全量 + CDC 持续复制，最终切换。同构迁移可直接用 DMS 或原生工具（如 pg_dump、MySQL 二进制日志复制）。" },
+    { id: "c305", d: "d4", tags: ["数据传输"],
+      q: "大量数据迁移：网络 vs 离线设备如何选？",
+      a: "粗算：数据量 ÷ 可用带宽 得出传输时间。带宽充裕：DataSync（自动化、校验、加密、调度）或 DX。时间不足或带宽有限：Snowball Edge（约 80 TB 可用）；PB 级可用多台 Snowball。（Snowmobile 已停用）" },
+    { id: "c306", d: "d4", tags: ["数据传输", "DataSync"],
+      q: "DataSync 与 Storage Gateway 的区别？",
+      a: "DataSync：一次性或定期在线迁移/同步（NFS、SMB、HDFS、对象存储 → S3/EFS/FSx）。Storage Gateway：长期混合云存储——S3 File Gateway（NFS/SMB 映射 S3）、FSx File Gateway、Volume Gateway（iSCSI 缓存/存储模式）、Tape Gateway（替代物理磁带备份）。" },
+    { id: "c307", d: "d4", tags: ["数据传输", "Transfer Family"],
+      q: "合作伙伴必须继续用 SFTP/FTPS 上传文件到 S3？",
+      a: "AWS Transfer Family：托管 SFTP/FTPS/FTP/AS2 服务端，后端存储为 S3 或 EFS，支持自定义身份提供程序和托管工作流。" },
+    { id: "c308", d: "d4", tags: ["现代化"],
+      q: "单体应用逐步拆分为微服务的模式？",
+      a: "绞杀者模式（Strangler Fig）：在前端放 API Gateway / ALB 路由，按功能逐步把流量切到新服务。AWS Migration Hub Refactor Spaces 可托管这种增量重构的路由和网络。" },
+    { id: "c309", d: "d4", tags: ["现代化", "容器"],
+      q: "把 .NET / Java 应用快速容器化的工具？",
+      a: "AWS App2Container（A2C）：分析运行中的应用，生成 Docker 镜像、ECS/EKS 任务定义与 CI/CD 流水线。" },
+    { id: "c310", d: "d4", tags: ["迁移规划"],
+      q: "AWS 迁移的三个阶段与对应工具？",
+      a: "评估（Assess）：Migration Evaluator、迁移就绪评估（MRA）。动员（Mobilize）：Application Discovery Service、Landing Zone（Control Tower）、迁移计划。迁移与现代化（Migrate & Modernize）：MGN、DMS、DataSync 等，进度在 Migration Hub 跟踪。" },
+    { id: "c311", d: "d4", tags: ["混合云"],
+      q: "需要在本地数据中心运行 AWS 服务（低延迟/数据驻留）？",
+      a: "AWS Outposts（机架或服务器形态，在本地运行 EC2、EBS、ECS、EKS、RDS 等）；Local Zones（靠近大城市的低延迟）；Wavelength（5G 边缘）。" },
+    { id: "c312", d: "d4", tags: ["迁移", "VMware"],
+      q: "不改动地把 VMware 工作负载迁到 AWS？",
+      a: "Relocate 策略：VMware Cloud on AWS（使用 HCX 迁移）。若要转换为原生 EC2，则用 MGN 做 Rehost。" },
+    { id: "c313", d: "d4", tags: ["数据库迁移", "大数据量"],
+      q: "数据库数十 TB 且网络带宽有限，如何用 DMS 迁移？",
+      a: "用 Snowball Edge 配合 DMS：SCT 数据提取代理把数据导到 Snowball Edge，寄回后加载到 S3，再由 DMS 导入目标库，并通过 CDC 追平增量。" },
+  ],
+
+  questions: [
+    { id: "q001", d: "d1",
+      stem: "某公司使用 AWS Organizations 管理 200 个账户。安全团队要求：任何账户都不能在 us-east-1 和 eu-west-1 以外的区域创建资源，且即使账户管理员也不能绕过。最佳方案是？",
+      options: [
+        "在每个账户中创建 IAM 策略，拒绝在其他区域的操作",
+        "在组织根上附加 SCP，基于 aws:RequestedRegion 拒绝其他区域的操作，并为全局服务设置例外",
+        "使用 AWS Config 规则检测其他区域的资源并发送通知",
+        "使用 Control Tower 的检测性控制监控区域使用",
+      ],
+      answer: [1],
+      explain: "SCP 是组织级护栏，成员账户管理员（包括 root）无法绕过。IAM 策略可被账户管理员修改；Config 和检测性控制只能发现问题而不能阻止。注意给 IAM、CloudFront、Route 53 等全局服务留例外。" },
+    { id: "q002", d: "d1",
+      stem: "公司有 50 个 VPC 分布在多个账户中，需要与本地数据中心互通，且 VPC 之间也要互通，同时生产与开发环境必须网络隔离。运维开销最小的方案是？",
+      options: [
+        "在所有 VPC 之间建立全网状 VPC Peering，并为每个 VPC 建立 VPN",
+        "部署 Transit Gateway 并通过 RAM 共享；用 DX Gateway 和 Transit VIF 接入本地；为生产和开发使用独立的 TGW 路由表",
+        "使用 PrivateLink 连接所有 VPC",
+        "在一个中心 VPC 中运行 EC2 软件路由器",
+      ],
+      answer: [1],
+      explain: "TGW 是中心辐射模型，多路由表实现分段隔离，RAM 跨账户共享，Transit VIF 经 DX Gateway 接入本地。Peering 网状在 50 个 VPC 时需要 1225 条连接且不支持传递路由；PrivateLink 是服务级单向访问，不是网络互联。" },
+    { id: "q003", d: "d1",
+      stem: "企业员工使用 Microsoft Entra ID 登录。公司希望员工用现有凭证访问 30 个 AWS 账户，并按部门授予不同权限，且用户离职后自动失去访问。应该怎么做？",
+      options: [
+        "在每个账户中为每位员工创建 IAM 用户",
+        "启用 IAM Identity Center，用 SAML 2.0 对接 Entra ID 并启用 SCIM 自动同步用户和组，按组分配权限集",
+        "在每个账户中配置 IAM SAML 身份提供商并手动维护角色映射",
+        "使用 Amazon Cognito 用户池对接 Entra ID",
+      ],
+      answer: [1],
+      explain: "IAM Identity Center 集中管理多账户访问；SCIM 自动预置/取消预置用户和组，实现离职自动失效。每账户单独配置 SAML 运维量大；Cognito 面向应用终端用户而非员工访问 AWS 控制台。" },
+    { id: "q004", d: "d1",
+      stem: "一家 SaaS 提供商需要将其服务暴露给数百个客户的 VPC。客户 VPC 的 CIDR 与提供商 VPC 以及彼此之间存在重叠。流量不能经过公网。应选择？",
+      options: [
+        "VPC Peering",
+        "Transit Gateway",
+        "在 NLB 后创建 VPC 终端节点服务（PrivateLink），客户创建接口终端节点",
+        "为每个客户建立 Site-to-Site VPN",
+      ],
+      answer: [2],
+      explain: "PrivateLink 不依赖路由，天然容忍 CIDR 重叠，并且可规模化接入大量消费者。Peering 与 TGW 都要求 CIDR 不重叠。" },
+    { id: "q005", d: "d1",
+      stem: "某公司要求所有账户的 CloudTrail 日志集中保存 7 年，任何人（包括管理员）都不能删除或修改。以下哪两项组合能满足要求？（选两项）",
+      options: [
+        "创建组织级 CloudTrail Trail，将日志投递到专用日志归档账户的 S3 存储桶",
+        "在每个账户中单独创建 Trail 并写入本账户的存储桶",
+        "在日志存储桶上启用 S3 Object Lock 合规模式，保留期 7 年",
+        "在存储桶上启用 MFA Delete 即可",
+        "使用 S3 生命周期规则将日志转入 Glacier Deep Archive",
+      ],
+      answer: [0, 2],
+      explain: "组织级 Trail 自动覆盖所有账户并集中投递；Object Lock 合规模式下保留期内任何用户（含 root）都无法删除。MFA Delete 仍可被持有 MFA 的 root 删除；生命周期规则只降低成本，不提供不可变性。" },
+    { id: "q006", d: "d1",
+      stem: "本地应用需要解析 AWS 中 Route 53 私有托管区（corp.aws.internal）的记录，并且多个账户的 VPC 需要解析本地域名 corp.local。最佳设计是？",
+      options: [
+        "在每个 VPC 中运行 EC2 BIND 服务器",
+        "在共享服务 VPC 中创建 Route 53 Resolver 入站和出站端点；本地 DNS 将 corp.aws.internal 转发到入站端点；为 corp.local 创建转发规则并通过 RAM 共享给其他账户的 VPC",
+        "把私有托管区改成公共托管区",
+        "在本地 DNS 中手动复制所有 AWS 记录",
+      ],
+      answer: [1],
+      explain: "Resolver 入站端点接收本地查询，出站端点 + 转发规则解析本地域名，规则可通过 RAM 跨账户共享并关联到各 VPC，是托管且可扩展的混合 DNS 方案。" },
+    { id: "q007", d: "d1",
+      stem: "公司希望开发者能自行为 Lambda 函数创建 IAM 角色，但要确保这些角色的权限永远不能超过一个预定义的策略范围。应该怎么做？",
+      options: [
+        "授予开发者 IAMFullAccess",
+        "授予 iam:CreateRole，并通过条件 iam:PermissionsBoundary 要求创建的角色必须附加指定的权限边界策略",
+        "使用 SCP 拒绝 iam:CreateRole",
+        "让安全团队手动审核每个角色",
+      ],
+      answer: [1],
+      explain: "权限边界限定角色的最大权限，且通过条件键强制附加，开发者无法创建超出边界的角色，实现安全的自助授权。" },
+
+    { id: "q101", d: "d2",
+      stem: "一个关键交易系统运行在 us-east-1 的 Aurora MySQL 上。业务要求区域级故障时 RPO 小于 1 秒、RTO 小于 1 分钟，同时尽量降低成本。应采用？",
+      options: [
+        "每小时做一次跨区域快照复制",
+        "创建跨区域只读副本（基于 binlog）",
+        "使用 Aurora Global Database，在 us-west-2 部署次要集群",
+        "使用 AWS Backup 跨区域备份",
+      ],
+      answer: [2],
+      explain: "Aurora Global Database 存储层复制延迟通常 < 1 秒，次要区域可在约 1 分钟内提升为主。快照与备份的 RPO 是小时级；binlog 副本延迟更高且切换更慢。" },
+    { id: "q102", d: "d2",
+      stem: "一家游戏公司使用 UDP 协议，玩家遍布全球。需要降低延迟、提供固定 IP 以便客户防火墙白名单，并在区域故障时快速切换。应选择？",
+      options: ["Amazon CloudFront", "AWS Global Accelerator", "Route 53 基于延迟的路由", "S3 Transfer Acceleration"],
+      answer: [1],
+      explain: "Global Accelerator 支持 TCP/UDP，提供两个静态 Anycast IP，通过 AWS 骨干网加速，并可秒级故障转移。CloudFront 面向 HTTP(S)；Route 53 受 DNS TTL 缓存影响，切换慢且不提供固定 IP。" },
+    { id: "q103", d: "d2",
+      stem: "应用需要以最低成本实现 DR：核心数据库在 DR 区域实时复制，应用服务器平时不运行，故障时数十分钟内恢复。这是哪种 DR 策略？",
+      options: ["备份与还原", "指示灯（Pilot Light）", "温备（Warm Standby）", "多站点主动/主动"],
+      answer: [1],
+      explain: "Pilot Light：核心数据持续复制，计算资源关闭或以 AMI/模板形式存在，故障时启动并扩展。温备则会以缩小规模持续运行完整环境。" },
+    { id: "q104", d: "d2",
+      stem: "一个图片处理任务每次需要运行 30–45 分钟，由 S3 上传事件触发，任务可中断重试，团队希望尽量少运维并降低成本。最佳方案是？",
+      options: [
+        "S3 事件直接触发 Lambda 处理",
+        "S3 事件 → EventBridge → 以 Fargate Spot 运行 ECS 任务（或 AWS Batch 使用 Spot）",
+        "长期运行的按需 EC2 实例轮询 S3",
+        "S3 事件 → SQS → Lambda",
+      ],
+      answer: [1],
+      explain: "Lambda 最长 15 分钟，无法完成 30–45 分钟的任务。EventBridge 触发 Fargate Spot/Batch Spot 任务无需管理服务器，且可中断任务适合 Spot 以节省成本。" },
+    { id: "q105", d: "d2",
+      stem: "金融公司要求加密密钥存放在单租户、FIPS 140 Level 3 验证的 HSM 中，客户对密钥拥有独占控制权，同时希望继续用 KMS 与 S3、EBS 的原生集成。应该怎么做？",
+      options: [
+        "使用 KMS 客户托管密钥",
+        "部署 CloudHSM 集群，并创建 KMS 自定义密钥存储（Custom Key Store）",
+        "使用 KMS 导入密钥材料",
+        "使用 Secrets Manager 存储密钥",
+      ],
+      answer: [1],
+      explain: "CloudHSM 支持的自定义密钥存储让 KMS 密钥材料驻留在你独占的 CloudHSM 中，同时保留与 AWS 服务的集成。导入密钥材料仍存放在 KMS 的多租户 HSM 中。" },
+    { id: "q106", d: "d2",
+      stem: "电商网站在大促期间订单写入激增，后端处理服务偶尔超载导致订单丢失。需要保证订单不丢、按每个用户的下单顺序处理。应采用？",
+      options: [
+        "SNS 标准主题",
+        "SQS FIFO 队列，使用用户 ID 作为 MessageGroupId",
+        "SQS 标准队列",
+        "直接写入 DynamoDB 并扫描处理",
+      ],
+      answer: [1],
+      explain: "SQS 缓冲削峰，保证消息不丢；FIFO 在同一 MessageGroupId 内严格有序且去重，不同用户的消息组可并行处理以提升吞吐。" },
+    { id: "q107", d: "d2",
+      stem: "某应用需要全球多个区域的用户都能以低延迟读写同一份用户资料数据，并在任一区域故障时继续写入。应选择？",
+      options: ["RDS 跨区域只读副本", "DynamoDB Global Tables", "Aurora Global Database（单写入区域）", "ElastiCache Global Datastore"],
+      answer: [1],
+      explain: "DynamoDB Global Tables 是多主多区域，每个区域都可本地读写。Aurora Global Database 默认单主（次要区域写转发仍到主区域）；ElastiCache 是缓存，不是持久化主存储。" },
+    { id: "q108", d: "d2",
+      stem: "一家医疗公司要在 S3 上存放影像，前 30 天频繁访问，之后几乎不访问但必须在需要时毫秒级取回，保存 10 年。成本最优的方案？",
+      options: [
+        "全部使用 S3 Standard",
+        "生命周期规则：30 天后转入 S3 Glacier Instant Retrieval",
+        "生命周期规则：30 天后转入 S3 Glacier Deep Archive",
+        "生命周期规则：30 天后转入 S3 One Zone-IA",
+      ],
+      answer: [1],
+      explain: "Glacier Instant Retrieval 适合很少访问但需毫秒级取回的数据，成本低于 Standard-IA。Deep Archive 取回需 12–48 小时；One Zone-IA 只在单 AZ，不适合不可重建的医疗数据。" },
+
+    { id: "q201", d: "d3",
+      stem: "公司在多个区域运行多种 EC2 实例族，并在逐步迁移到 Fargate 和 Lambda。希望用 3 年承诺获得最大灵活性的折扣。应购买？",
+      options: ["标准预留实例", "EC2 Instance Savings Plans", "Compute Savings Plans", "可转换预留实例"],
+      answer: [2],
+      explain: "Compute Savings Plans 跨实例族、区域、操作系统，并且覆盖 Fargate 与 Lambda，最适合架构不断变化的场景。" },
+    { id: "q202", d: "d3",
+      stem: "一组 Lambda 函数在流量高峰期间大量连接 RDS PostgreSQL，导致 too many connections 错误。在不改动数据库规格的前提下，最佳修复方式？",
+      options: ["增加 RDS 实例规格", "在 Lambda 与 RDS 之间引入 RDS Proxy", "降低 Lambda 超时时间", "改为 RDS 只读副本"],
+      answer: [1],
+      explain: "RDS Proxy 维护连接池并复用连接，专门解决 Lambda 等无服务器场景的连接风暴，还能缩短故障转移时间。" },
+    { id: "q203", d: "d3",
+      stem: "安全团队要求：一旦发现有安全组对 0.0.0.0/0 开放 22 端口，应自动移除该规则，且适用于组织内所有账户。最少运维的方案是？",
+      options: [
+        "每天运行脚本扫描所有账户",
+        "部署组织 Config 规则（restricted-ssh），并配置使用 SSM Automation 文档的自动修复",
+        "使用 GuardDuty 检测并人工处理",
+        "通过 Trusted Advisor 每周检查",
+      ],
+      answer: [1],
+      explain: "Config 规则持续评估配置变更，配合 SSM Automation 自动修复；组织规则/一致性包可统一下发到所有账户。也可用 Firewall Manager 安全组策略实现。" },
+    { id: "q204", d: "d3",
+      stem: "团队希望发布 Lambda 新版本时先把 10% 流量导向新版本，10 分钟内如 CloudWatch 错误告警触发则自动回滚。应该用？",
+      options: [
+        "手动修改 Lambda 别名权重",
+        "CodeDeploy 部署配置 LambdaCanary10Percent10Minutes，并关联 CloudWatch 告警",
+        "Route 53 加权路由",
+        "CloudFormation 堆栈更新回滚",
+      ],
+      answer: [1],
+      explain: "CodeDeploy 支持对 Lambda 别名进行金丝雀/线性流量切换，并在告警触发时自动回滚。" },
+    { id: "q205", d: "d3",
+      stem: "运维团队需要登录私有子网中的 EC2 实例排障，安全团队禁止开放入站 22 端口和使用堡垒机，并要求记录所有会话操作。应采用？",
+      options: [
+        "EC2 Instance Connect 通过公网 IP",
+        "Systems Manager Session Manager，配合 VPC 接口终端节点，会话日志写入 S3/CloudWatch Logs",
+        "在公有子网部署堡垒机",
+        "Site-to-Site VPN 后 SSH",
+      ],
+      answer: [1],
+      explain: "Session Manager 不需要入站端口，通过 SSM Agent 出站连接（私有子网可用 ssm、ssmmessages、ec2messages 终端节点），并可审计记录会话。" },
+    { id: "q206", d: "d3",
+      stem: "批处理工作负载每晚运行，可容忍中断。现在使用按需实例，成本过高。在保证作业最终完成的前提下，哪项方案最能降低成本？",
+      options: [
+        "购买 3 年标准 RI",
+        "使用 Auto Scaling 组的混合实例策略，以多种实例类型的 Spot 为主，使用 price-capacity-optimized 分配策略",
+        "改为更大的单一实例",
+        "使用专用主机",
+      ],
+      answer: [1],
+      explain: "可中断的批处理最适合 Spot（最高约 90% 折扣）；多实例类型 + price-capacity-optimized 降低中断概率。仅夜间运行的负载不适合 24×7 承诺的 RI。" },
+
+    { id: "q301", d: "d4",
+      stem: "公司需要在 6 个月内把 800 台 VMware 虚拟机迁移到 AWS EC2，要求停机时间最短，并尽量少改动应用。应选择？",
+      options: ["AWS DMS", "AWS Application Migration Service（MGN）", "手动导出 OVA 并用 VM Import", "AWS DataSync"],
+      answer: [1],
+      explain: "MGN 是大规模 Rehost 的首选：持续块级复制、非破坏性测试，切换停机仅分钟级。VM Import 需要停机导出且难以规模化。" },
+    { id: "q302", d: "d4",
+      stem: "需要将 Oracle 数据库迁移到 Aurora PostgreSQL，包含存储过程，且业务只能接受几分钟停机。正确的步骤组合是？（选两项）",
+      options: [
+        "使用 AWS SCT（或 DMS Schema Conversion）转换模式和存储过程",
+        "使用 DMS 执行全量加载 + CDC 持续复制，最后切换",
+        "使用 MGN 复制数据库服务器",
+        "使用 DataSync 复制数据文件",
+        "使用 Snowball Edge 一次性导入后直接切换",
+      ],
+      answer: [0, 1],
+      explain: "异构迁移需要 SCT 转换模式与代码，再用 DMS 全量 + CDC 保持同步，最终短暂停机切换。MGN/DataSync 不做引擎转换。" },
+    { id: "q303", d: "d4",
+      stem: "公司要把 500 TB 归档数据迁移到 S3，本地出口带宽为 500 Mbps 且业务高峰占用严重，期限 3 周。最佳选择是？",
+      options: ["DataSync 通过现有网络", "多台 AWS Snowball Edge 存储优化设备", "S3 Transfer Acceleration", "新建 1 Gbps Direct Connect"],
+      answer: [1],
+      explain: "500 TB 在 500 Mbps 满速下也需约 90 天，远超 3 周；新建 DX 通常需要数周到数月交付。多台 Snowball Edge 并行是可行方案。" },
+    { id: "q304", d: "d4",
+      stem: "在制定迁移计划前，需要发现本地 VMware 环境中服务器的资源利用率以及服务器之间的网络依赖关系。最合适的是？",
+      options: [
+        "AWS Application Discovery Service 的 Discovery Agent，数据汇总到 Migration Hub",
+        "AWS Config",
+        "Trusted Advisor",
+        "VPC 流日志",
+      ],
+      answer: [0],
+      explain: "Discovery Agent 能采集性能数据以及进程、网络连接依赖关系；无代理的 Agentless Collector 主要提供 VM 配置和利用率，依赖信息较少。" },
+    { id: "q305", d: "d4",
+      stem: "一个单体 Java 应用需要逐步重构为微服务，要求在重构期间不中断现有服务，按功能逐个切流量到新服务。应采用？",
+      options: [
+        "一次性重写后整体切换",
+        "绞杀者模式：在前端放置 API Gateway / ALB 路由（可用 Migration Hub Refactor Spaces），逐步把路径路由到新服务",
+        "直接 Rehost 到更大的 EC2",
+        "使用 Elastic Beanstalk 部署单体",
+      ],
+      answer: [1],
+      explain: "绞杀者模式支持增量重构，风险可控，每次只迁移一部分功能并可快速回退。" },
+    { id: "q306", d: "d4",
+      stem: "外部合作伙伴每天通过 SFTP 上传文件到本地服务器。公司要迁到 AWS，合作伙伴不愿改变上传方式，文件需落到 S3 并在到达后自动处理。最佳方案？",
+      options: [
+        "在 EC2 上自建 SFTP 服务器并定时同步到 S3",
+        "AWS Transfer Family SFTP 端点，后端为 S3，使用托管工作流或 S3 事件触发处理",
+        "Storage Gateway S3 File Gateway",
+        "DataSync 定时任务",
+      ],
+      answer: [1],
+      explain: "Transfer Family 是托管 SFTP，合作伙伴无需改变，文件直接写入 S3，可用托管工作流或事件通知触发后续处理。" },
+    { id: "q307", d: "d4",
+      stem: "本地备份软件依赖物理磁带库，公司希望去掉磁带但不改变现有备份流程，并把备份长期保存到低成本存储。应选择？",
+      options: ["S3 File Gateway", "Tape Gateway（虚拟磁带库），归档到 S3 Glacier / Deep Archive", "Volume Gateway 存储模式", "EFS"],
+      answer: [1],
+      explain: "Tape Gateway 向备份软件呈现 iSCSI 虚拟磁带库（VTL），无需改流程；虚拟磁带可归档到 Glacier Flexible Retrieval 或 Deep Archive。" },
+  ],
+
+  keywords: [
+    { k: "最少运维 / 无服务器", v: "Lambda、Fargate、DynamoDB、S3、Aurora Serverless v2、托管服务优先" },
+    { k: "跨账户统一护栏、不可绕过", v: "SCP（Organizations）" },
+    { k: "多账户自动化落地 / 开户工厂", v: "Control Tower + Account Factory" },
+    { k: "员工单点登录多个账户", v: "IAM Identity Center（+ SCIM）" },
+    { k: "防混淆代理（第三方访问）", v: "跨账户角色 + sts:ExternalId" },
+    { k: "大量 VPC 互联 / 传递路由", v: "Transit Gateway" },
+    { k: "CIDR 重叠 + 暴露服务", v: "PrivateLink（NLB + Endpoint Service）" },
+    { k: "混合 DNS 解析", v: "Route 53 Resolver 入站/出站端点 + 转发规则（RAM 共享）" },
+    { k: "私网访问 S3 且免费", v: "S3 Gateway Endpoint（本地访问需 Interface Endpoint）" },
+    { k: "专线 + 加密", v: "DX 上跑 VPN，或 MACsec" },
+    { k: "TCP/UDP 加速、固定 IP", v: "Global Accelerator" },
+    { k: "静态内容全球加速 / 边缘缓存", v: "CloudFront（+ OAC 保护 S3 源）" },
+    { k: "RPO 1 秒 / RTO 1 分钟（关系型）", v: "Aurora Global Database" },
+    { k: "多区域多主写入", v: "DynamoDB Global Tables" },
+    { k: "服务器级 DR、低成本、分钟级 RTO", v: "Elastic Disaster Recovery（DRS）" },
+    { k: "WORM / 防删除合规", v: "S3 Object Lock 合规模式、Glacier Vault Lock" },
+    { k: "访问模式未知的 S3 数据", v: "S3 Intelligent-Tiering" },
+    { k: "任务 > 15 分钟", v: "Step Functions、ECS/Fargate、AWS Batch（不是 Lambda）" },
+    { k: "顺序 + 去重消息", v: "SQS FIFO（MessageGroupId）" },
+    { k: "扇出到多个订阅者", v: "SNS → 多个 SQS（扇出模式）" },
+    { k: "SaaS 事件 / 跨账户事件路由", v: "EventBridge" },
+    { k: "实时流、可重放", v: "Kinesis Data Streams（落地用 Firehose）" },
+    { k: "Lambda 连接数据库风暴", v: "RDS Proxy" },
+    { k: "微秒级 DynamoDB 读取", v: "DAX" },
+    { k: "单租户 HSM / FIPS Level 3", v: "CloudHSM（可做 KMS 自定义密钥存储）" },
+    { k: "数据库密码自动轮换", v: "Secrets Manager" },
+    { k: "L7 攻击 / SQL 注入 / 限速", v: "AWS WAF（+ Shield Advanced）" },
+    { k: "组织统一下发 WAF / 安全组策略", v: "Firewall Manager" },
+    { k: "S3 中发现 PII", v: "Amazon Macie" },
+    { k: "威胁检测", v: "GuardDuty" },
+    { k: "漏洞扫描（EC2/ECR/Lambda）", v: "Amazon Inspector" },
+    { k: "汇总安全发现与合规评分", v: "Security Hub" },
+    { k: "配置合规 + 自动修复", v: "AWS Config 规则 + SSM Automation" },
+    { k: "无需 SSH/堡垒机登录实例", v: "SSM Session Manager" },
+    { k: "灵活的计算承诺折扣", v: "Compute Savings Plans" },
+    { k: "可中断批处理降本", v: "Spot 实例（混合实例策略）" },
+    { k: "规格过大 / 资源优化建议", v: "Compute Optimizer、Trusted Advisor" },
+    { k: "金丝雀发布 + 自动回滚", v: "CodeDeploy（Lambda/ECS）+ CloudWatch 告警" },
+    { k: "混沌工程 / 韧性评估", v: "Fault Injection Service、Resilience Hub" },
+    { k: "服务器直接迁移（Rehost）", v: "Application Migration Service（MGN）" },
+    { k: "迁移前发现依赖关系", v: "Application Discovery Service（Agent）+ Migration Hub" },
+    { k: "迁移 TCO 业务论证", v: "Migration Evaluator" },
+    { k: "异构数据库迁移", v: "SCT / DMS Schema Conversion + DMS（全量 + CDC）" },
+    { k: "在线大量文件迁移", v: "DataSync" },
+    { k: "带宽不足的离线迁移", v: "Snowball Edge" },
+    { k: "本地长期访问云存储（NFS/SMB）", v: "Storage Gateway（S3 File Gateway）" },
+    { k: "替换物理磁带", v: "Tape Gateway" },
+    { k: "保留 SFTP 上传方式", v: "Transfer Family" },
+    { k: "单体逐步拆分", v: "绞杀者模式 + Migration Hub Refactor Spaces" },
+    { k: "应用一键容器化", v: "App2Container" },
+    { k: "VMware 原样搬迁", v: "VMware Cloud on AWS（Relocate）" },
+    { k: "本地运行 AWS 服务", v: "AWS Outposts" },
+    { k: "Windows 共享文件 / AD", v: "FSx for Windows File Server" },
+    { k: "HPC 高吞吐文件系统", v: "FSx for Lustre（可关联 S3）" },
+    { k: "NetApp 迁移 / 多协议", v: "FSx for NetApp ONTAP" },
+    { k: "S3 数据湖细粒度权限", v: "Lake Formation" },
+  ],
+};
+
+</script>
+  <script>
+window.SAP_METHOD = {
+  steps: [
+    { t: "① 先读问句，定评分标准", d: "跳到题目最后一句：“运维开销最少 / 最具成本效益 / 停机最少 / 性能最好 / 最安全”。这句话决定在“都能实现”的选项里谁胜出。没有比较级（只问“满足要求”）时，只看哪一项能完整满足所有硬约束。" },
+    { t: "② 回到题干，圈硬约束", d: "找“必须 / 不能 / 不得 / 仅 / 已经有”。数字（RPO、RTO、TB、Mbps、分钟）、协议（MQTT、SFTP、SMB、UDP）、边界（不走公网、不改代码、固定 IP、指定区域）各圈一个。每条硬约束通常能直接排除一个选项。" },
+    { t: "③ 定位场景，想出“标准答案”", d: "不看选项，先用一句话说出你认为的标准方案（例如“连接数爆了 → RDS Proxy”）。这一步借助下面的“关键词 → 服务”反射。" },
+    { t: "④ 看选项：先排除，再比较", d: "先划掉含“手动 / 自建 EC2 / 公网 / 长期密钥 / 不存在的功能”的项；剩下两项时，只比较它们的差异点，按第①步的评分标准裁决。多选题按需求点逐个对号入座。" },
+  ],
+
+  stats: [
+    { k: "全题库任一选项为正确的概率", v: "30%（4 选 1 单选基准为 25%）" },
+    { k: "单选题中“最长”选项正确率", v: "33%（略高于基准，不能单靠它）" },
+    { k: "单选题中“最短”选项正确率", v: "17%（明显偏低，可优先怀疑）" },
+    { k: "与其他选项“长得最不像”的那项", v: "17%（孤立的离群选项多为凑数）" },
+    { k: "含“手动”的选项", v: "12%" },
+    { k: "含“每天/每小时”定时跑的选项", v: "10% / 18%（题干要实时或事件驱动时几乎必错）" },
+    { k: "含“替换”的选项", v: "19%" },
+    { k: "含“公共/互联网”的选项", v: "22% / 24%" },
+    { k: "含“IAM 用户”的选项", v: "22%（长期凭证思路多为干扰）" },
+    { k: "“最少运维”题里含 EC2 的选项", v: "17%" },
+    { k: "“最少运维”题里含 Lambda 的选项", v: "19%（自写胶水代码也算运维）" },
+    { k: "“最少运维”题里含 Config 规则的选项", v: "10%" },
+    { k: "“最少运维”题里含 RAM / Fargate / CloudFront", v: "56% / 50% / 50%" },
+    { k: "全题库高胜率关键词", v: "RDS Proxy 58%、PrivateLink 48%、SCT 47%、Lambda@Edge 46%、Secrets Manager 44%、RAM 43%、AWS Backup 41%" },
+    { k: "全题库低胜率关键词", v: "VPC 对等 15%、快照 16%、Trusted Advisor 17%、Storage Gateway 17%、Redshift 17%、Snowball 19%" },
+    { k: "单选正确答案字母分布", v: "A 24% / B 31% / C 28% / D 17%（只作为最后的瞎蒙参考）" },
+  ],
+
+  tips: [
+    // ---------- 审题 ----------
+    { cat: "审题", title: "先读最后一句问句，再读题干",
+      body: "问句决定评分标准。题库里约 117 题问“运维最少”、81 题问“成本”、80 题问“性能/延迟”、41 题问“停机/RPO/RTO”。带着标准读题干，读到相关信息时就能立刻判断。",
+      ex: [623, 32, 97, 273] },
+    { cat: "审题", title: "“必须 / 不能 / 不得”每条都是一把刀",
+      body: "把硬约束逐条列出来，每条都去砍选项。例如“数据不得通过互联网” → 砍掉所有走 NAT/公网的选项；“第三方只白名单原公网 CIDR” → 只剩 BYOIP。",
+      ex: [262, 193, 407, 521] },
+    { cat: "审题", title: "把数字翻译成服务",
+      body: "RPO 约 1 秒 / RTO 约 1 分钟 → Aurora Global Database、DynamoDB 全局表；服务器级 RPO 秒级 → Elastic Disaster Recovery；RPO 5 分钟 + RTO 十几分钟 → 跨区域只读副本提升；可丢一天/几小时 → AWS Backup 跨区域复制。任务超过 15 分钟 → 不能用 Lambda。",
+      ex: [301, 58, 502, 150, 415, 32] },
+    { cat: "审题", title: "症状本身就是答案",
+      body: "题干描述的故障现象通常直接对应一个“药”：too many connections → RDS Proxy；首请求慢/冷启动 → 预置并发；坏消息反复重试拖住队列 → 死信队列；处理时间长于可见性超时 → 调大可见性超时；扩容启动慢 → Warm Pool。",
+      ex: [15, 170, 349, 496, 317, 22, 178] },
+    { cat: "审题", title: "协议名 = 服务名",
+      body: "MQTT → IoT Core；SFTP/FTP/AS2 → Transfer Family；SMB + AD → FSx for Windows（或 S3 File Gateway）；Linux NFS 共享 → EFS；POSIX 高吞吐 + 与 S3 同步 → FSx for Lustre；iSCSI → Volume Gateway（缓存模式）；UDP → NLB + Global Accelerator；RabbitMQ → Amazon MQ；MongoDB → DocumentDB；Kafka → MSK。",
+      ex: [31, 138, 52, 604, 216, 498, 300, 469, 109, 351, 395] },
+    { cat: "审题", title: "“数百账户 / 所有账户 / 未来新账户”= 上组织级工具",
+      body: "看到账户规模词，答案就在组织层：Organizations 全部功能 + SCP、StackSets 服务托管权限 + 自动部署、Firewall Manager、委托管理员、组织 Trail、Control Tower。逐账户手工配置的选项全部排除。",
+      ex: [101, 286, 616, 657, 169, 59] },
+    { cat: "审题", title: "“现有和将来的都要” = 要自动化钩子",
+      body: "“新建账户也要自动生效”说明要找能自动覆盖新对象的机制：StackSets 自动部署、组织级 Trail、Control Tower 控制、CreateAccount 事件触发 EventBridge、EBS 默认加密。只修复存量的选项不完整。",
+      ex: [616, 634, 198, 450, 443] },
+    { cat: "审题", title: "时间词：实时 vs 定时",
+      body: "题干写“实时/立即/近实时”，答案是事件驱动（S3 事件、EventBridge、Kinesis、SNS），轮询和定时任务选项几乎必错（含“每天”的选项正确率仅 10%）。题干写“每晚/批量/可重跑”，才考虑定时 + Spot/Batch。",
+      ex: [166, 232, 136, 550] },
+    { cat: "审题", title: "“不改代码 / 少改动 / 不能改第三方应用”",
+      body: "这类题考的是 Replatform：选兼容的托管替代品，不选重构。SQL Server → Aurora PostgreSQL + Babelfish；MongoDB → DocumentDB；RabbitMQ → Amazon MQ；第三方应用要加登录 → ALB 认证 + Cognito；不改 Lambda 限流 → API Gateway 使用计划。",
+      ex: [40, 351, 190, 21, 656] },
+    { cat: "审题", title: "负载形态决定购买方式",
+      body: "已知日期的峰值 → 计划扩展/提前放大；可中断、可重跑、时间宽松 → Spot（或 Batch Spot）；全年稳定 → Savings Plans / RI；EC2 正在向 Fargate/Lambda 迁移 → Compute Savings Plans；长期空闲后突发 → Serverless（Aurora Serverless v2）。",
+      ex: [9, 344, 366, 217, 578, 534] },
+
+    // ---------- 选项 ----------
+    { cat: "选项", title: "第一刀先砍“手动”",
+      body: "含“手动”的选项正确率仅 12%。“人工检查”“逐个账户配置”“登录每台机器”都是陷阱，除非题目本身要求人工审批。",
+      ex: [134, 107, 26] },
+    { cat: "选项", title: "最少运维的优先级：开关 > 配置 > Lambda > EC2",
+      body: "在“运维最少”题里，含 EC2 的选项只有 17% 正确，含 Lambda 的只有 19%，含 Config 规则的只有 10%；而 RAM 共享、Fargate、CloudFront 等“开关式”方案达到 50% 以上。口诀：能开开关不写代码，能写配置不写 Lambda，能用 Lambda 不起 EC2。",
+      ex: [683, 29, 460, 623] },
+    { cat: "选项", title: "找“只差一个细节”的两个选项",
+      body: "出题人通常以正确答案为模板改一两处造干扰项。单选题里与其他选项差异最大的那项正确率只有 17%，最短的也只有 17%。先找出两两只差一个细节的选项对，答案多半在其中，只需比较差异点。",
+      ex: [467, 139, 255] },
+    { cat: "选项", title: "一处错误零件，整句就错",
+      body: "长选项逐段核对，只要有一个零件不成立就排除：SCP 授予权限、Deep Archive 五分钟内取回、Lambda 跑两小时、DAX 加速写入、ALB 接 UDP/原生 MQTT、在路由表里加“拒绝”规则、跨区域异步复制保证零丢失。",
+      ex: [60, 80, 93, 373, 514, 151] },
+    { cat: "选项", title: "两个都可行时，回到问句裁决",
+      body: "运维问 → 更托管的；成本问 → 更便宜的（Spot < Savings Plans < 按需；S3 存储层级）；性能问 → 缓存、边缘、就近区域；可用性问 → 多 AZ、多区域、自动故障转移。不要用自己的偏好裁决。",
+      ex: [74, 230, 454, 471] },
+    { cat: "选项", title: "多选题：拆需求点，一项管一点",
+      body: "多选题的正确项通常各自解决题干的一个需求点，彼此互补而不重复。先把题干拆成 2 或 3 个需求点，再对号入座；两个选项做同一件事时一般只对一个。",
+      ex: [1, 2, 457, 235, 357] },
+    { cat: "选项", title: "跨账户访问要“几道门”同时打开",
+      body: "跨账户访问 S3/KMS：资源策略（桶策略）放行 + 调用方身份策略允许 + KMS 密钥策略允许解密，缺一不可。SCP 和权限边界只设上限，不授予权限，“允许了还是被拒绝”就去查它们。",
+      ex: [152, 615, 60, 238, 355] },
+    { cat: "选项", title: "长期凭证类选项基本是干扰",
+      body: "含“IAM 用户”的选项正确率 22%。赢家是角色 + STS 临时凭证：GitHub 等外部 CI → OIDC；员工登录 → Identity Center；第三方 → 跨账户角色 + ExternalId；数据库密码 → Secrets Manager 轮换。",
+      ex: [260, 63, 622, 505, 174, 510] },
+    { cat: "选项", title: "题干强调私网，“公网”选项先排除",
+      body: "含“公共/互联网”的选项正确率仅 22–24%。题干只要出现“不经过互联网/私网”，就只在 VPC 端点、PrivateLink、DX、Client VPN 中选。",
+      ex: [262, 275, 342, 572] },
+    { cat: "选项", title: "警惕过时服务名",
+      body: "Server Migration Service（SMS）已停用，迁移服务器用 MGN；Snowmobile 已停用；CloudWatch Events 现为 EventBridge。题库原答案若用旧服务，按当前服务的思路理解，不死记字母。",
+      ex: [491, 606, 401] },
+
+    // ---------- 关键词 ----------
+    { cat: "关键词", title: "固定 IP / 白名单：分清入站和出站",
+      body: "入站要固定 IP → Global Accelerator（任意协议、全球）或 NLB 绑 EIP；ALB 前要固定 IP → NLB 前置 ALB 或 Global Accelerator；出站要固定 IP → NAT 网关绑 EIP；迁移后要保留原地址 → BYOIP。",
+      ex: [372, 559, 565, 255, 185, 215, 226, 193] },
+    { cat: "关键词", title: "私网访问 AWS 服务：网关端点还是接口端点",
+      body: "VPC 内访问 S3/DynamoDB 且想省 NAT 费 → 网关端点（免费）；本地或对等网络访问 S3 → 接口端点；其他服务（Kinesis、execute-api、SSM 等）→ 接口端点并开启私有 DNS。",
+      ex: [139, 440, 475, 572, 416, 163] },
+    { cat: "关键词", title: "VPC 互联三选一",
+      body: "CIDR 重叠或只暴露一个服务 → PrivateLink（NLB + 端点服务）；大量 VPC 互通、按环境隔离 → Transit Gateway + 多路由表；让其他账户直接用中央网络 → RAM 共享子网。VPC 对等在题库里正确率仅 15%。",
+      ex: [661, 521, 130, 384, 473, 208] },
+    { cat: "关键词", title: "混合 DNS 看方向",
+      body: "本地要解析云上私有域 → Route 53 Resolver 入站端点 + 本地条件转发；云上要解析本地域 → 出站端点 + 转发规则（RAM 共享给多账户、关联所有 VPC）。",
+      ex: [201, 322, 254, 452, 524] },
+    { cat: "关键词", title: "数据怎么搬：先做带宽算术",
+      body: "数据量 ÷ 带宽 = 天数，超出期限就用 Snowball Edge。网络够用：文件 → DataSync；数据库 → DMS（异构先 SCT）；整台服务器 → MGN；容灾 → DRS；长期混合访问 → Storage Gateway。",
+      ex: [91, 64, 87, 231, 340, 650, 244, 590, 436] },
+    { cat: "关键词", title: "迁移评估三件套",
+      body: "要 TCO/商业论证 → Migration Evaluator（可导入 CMDB/CSV）；要进程和网络依赖 → Application Discovery Agent；不能装代理 → 无代理采集；汇总与规划 → Migration Hub（含策略建议）。",
+      ex: [20, 103, 470, 671, 75, 558, 609, 302] },
+    { cat: "关键词", title: "发布与回滚",
+      body: "Lambda 灰度 → 别名权重 / CodeDeploy 金丝雀 + 告警回滚；Beanstalk 蓝绿 → 交换环境 URL；ASG 打补丁 → 新 AMI + 启动模板 + Instance Refresh；部署前拦截不合规资源 → CloudFormation Hooks；删除堆栈要保留数据 → DeletionPolicy Retain。",
+      ex: [38, 268, 405, 369, 426, 240, 377, 319] },
+    { cat: "关键词", title: "成本分账与告警",
+      body: "按团队/项目分账 → 在管理账户激活成本分配标签 + CUR/成本类别 + Cost Explorer；超预算提醒 → Budgets + SNS；不让某账户共享 RI 折扣 → 在账单中关闭 RI 共享；规格建议 → Compute Optimizer（内存指标需装 CloudWatch Agent）。",
+      ex: [135, 639, 457, 25, 554, 365, 50] },
+    { cat: "关键词", title: "缓存放在哪一层",
+      body: "会话状态 → ElastiCache Redis 或 DynamoDB；DynamoDB 读热点 → DAX（不解决写入）；API 重复 GET → API Gateway 缓存；静态/大文件 → CloudFront；CloudFront 命中率低 → CloudFront Function 规范化查询参数。",
+      ex: [292, 206, 477, 591, 203, 630, 102, 564] },
+    { cat: "关键词", title: "防止绕过 CloudFront 直打源站",
+      body: "CloudFront 添加自定义源站头（可用 Secrets Manager 轮换），ALB 或 WAF 校验该头；或 ALB 安全组只放行 CloudFront 托管前缀列表。S3 源 → OAC。",
+      ex: [159, 625, 195, 536] },
+    { cat: "关键词", title: "限制组织内行为 = SCP 条件键",
+      body: "限区域 → aws:RequestedRegion；限实例类型 → ec2:InstanceType；必须带标签 → aws:RequestTag 为空则拒绝；禁止公网 IP → 拦截相关启动参数。SCP 不授权，记得 IAM 侧还要给权限。",
+      ex: [169, 601, 517, 165, 142, 161] },
+    { cat: "关键词", title: "自助开通但要受控 = Service Catalog",
+      body: "“让团队自助启动，但只能用批准的配置/规格/标签”→ Service Catalog 产品 + 启动约束（以服务角色代为部署）+ TagOption。",
+      ex: [85, 173, 472, 614, 128] },
+    { cat: "关键词", title: "待核验题：背思路，不背字母",
+      body: "题库约 115 题标了“待核验”，原答案可能有误。刷这些题时看“核验备注”，按正确的技术逻辑判断；考场上同类题以技术正确为准。冲刺阶段可以先刷可靠题，最后再看待核验题。",
+      ex: [1, 93, 80, 151] },
+  ],
+
+  domains: [
+    { name: "领域 1：复杂组织的解决方案设计（26%）",
+      bank: "题库主题：安全与权限、网络与连接、部署与治理（组织部分）",
+      flow: [
+        "先判断题目是“管人”（身份与权限）、“管账户”（组织与治理）还是“管网络”（多 VPC 与混合连接）。",
+        "管人：员工登录 → Identity Center（+ 外部 IdP/AD）；跨账户 → 角色 + 信任策略；第三方 → ExternalId；限制 → SCP / 权限边界。",
+        "管账户：建多账户 → Control Tower；批量部署 → StackSets；统一安全 → 委托管理员 + Security Hub/GuardDuty；统一防护 → Firewall Manager；统一日志 → 组织 Trail。",
+        "管网络：互通 → TGW；暴露服务 → PrivateLink；共享 → RAM；混合 → DX/VPN + DX Gateway；DNS → Resolver 端点；集中出网/检查 → 出口 VPC、Network Firewall、GWLB。",
+      ],
+      ex: [63, 622, 101, 657, 130, 176, 364, 201] },
+    { name: "领域 2：新解决方案设计（29%）",
+      bank: "题库主题：弹性与性能、高可用与灾备、数据存储与分析",
+      flow: [
+        "先定 RPO/RTO 和可用性级别，再选 DR 档位：备份还原 → 指示灯 → 温备 → 多站点。",
+        "再定数据层：关系型 → Aurora（全局 → Aurora Global）；键值大规模 → DynamoDB（多区域写 → 全局表）；文件 → EFS/FSx；对象 → S3。",
+        "再定计算：短任务事件驱动 → Lambda；长任务 → Fargate / Batch / Step Functions 编排；需要 OS 控制 → EC2 + ASG。",
+        "最后补韧性：解耦（SQS/SNS/EventBridge）、缓存（CloudFront/ElastiCache/DAX）、多 AZ、健康检查与故障转移。",
+      ],
+      ex: [301, 189, 545, 513, 328, 527, 588, 207] },
+    { name: "领域 3：现有解决方案的持续改进（25%）",
+      bank: "题库主题：成本与计费、弹性与性能、部署与治理",
+      flow: [
+        "题目会先描述“现状 + 痛点”，痛点就是考点：慢、贵、宕机、发布难、不合规。",
+        "慢 → 缓存/读副本/扩缩/边缘；贵 → 规格优化/购买方式/存储分层/去 NAT；宕机 → 多 AZ/ASG/健康检查；发布难 → CI/CD 蓝绿金丝雀；不合规 → Config + 自动修复、Control Tower 控制。",
+        "改进题偏好“最小改动”：在现有架构上加组件（Proxy、缓存、端点、ASG），而不是推倒重来。",
+      ],
+      ex: [349, 139, 240, 72, 297, 26, 405] },
+    { name: "领域 4：加速工作负载迁移与现代化（20%）",
+      bank: "题库主题：迁移与混合架构、数据存储与分析（迁移部分）",
+      flow: [
+        "先看阶段：评估（Migration Evaluator / Discovery）→ 选策略（7R）→ 搬迁（MGN / DMS / DataSync / Snowball）→ 现代化（容器化、无服务器、托管库）。",
+        "选策略看约束：时间紧、不改代码 → Rehost（MGN）；想省许可费、少运维 → Replatform（RDS/Aurora/Babelfish）；要弹性和敏捷 → Refactor（Lambda/容器/绞杀者模式）。",
+        "数据库迁移永远是：（异构先 SCT）+ DMS 全量 + CDC，追平后切 DNS/CNAME。",
+      ],
+      ex: [401, 470, 609, 491, 244, 325, 512, 581] },
+  ],
+
+  duels: [
+    { a: "PrivateLink", b: "VPC 对等", rule: "CIDR 重叠、单向暴露服务、大量消费者 → PrivateLink；少量 VPC 全网段互通 → 对等。", stat: "同题对决：PrivateLink 胜 5，对等胜 0", ex: [661, 205] },
+    { a: "Transit Gateway", b: "VPC 对等", rule: "VPC 多、要传递路由、要分段隔离 → TGW。对等不支持传递路由。", stat: "", ex: [130, 384] },
+    { a: "Global Accelerator", b: "CloudFront", rule: "非 HTTP（TCP/UDP）、固定 IP、秒级区域切换 → Global Accelerator；HTTP 缓存/静态内容 → CloudFront。", stat: "同题对决：Global Accelerator 胜 5，CloudFront 胜 1", ex: [109, 483, 203] },
+    { a: "Global Accelerator", b: "Route 53 故障转移", rule: "要快速切换且不受 DNS 缓存影响 → Global Accelerator；成本敏感、可接受 TTL → Route 53。", stat: "同题对决：Global Accelerator 胜 3，Route 53 胜 1", ex: [483, 626] },
+    { a: "Secrets Manager", b: "Parameter Store", rule: "需要自动轮换、跨区复制 → Secrets Manager；普通配置 → Parameter Store。", stat: "同题对决：Secrets Manager 胜 4，Parameter Store 胜 1", ex: [174, 510, 309] },
+    { a: "AWS Backup", b: "手动快照/脚本", rule: "统一计划、跨账户/跨区域复制、保留策略、Vault Lock → AWS Backup。", stat: "同题对决：Backup 胜 5，快照胜 0", ex: [150, 553, 637] },
+    { a: "DMS", b: "DataSync", rule: "数据库（含持续 CDC）→ DMS；文件/对象 → DataSync。", stat: "同题对决：DMS 胜 4，DataSync 胜 0", ex: [325, 231] },
+    { a: "DataSync", b: "Snowball", rule: "带宽够、需持续/增量同步 → DataSync；带宽 ÷ 数据量超出期限 → Snowball。", stat: "同题对决：DataSync 胜 3，Snowball 胜 1", ex: [340, 91] },
+    { a: "Fargate", b: "EC2", rule: "不想管主机 → Fargate；需要 GPU、自定义 AMI/代理、主机级控制 → EC2 启动类型。", stat: "同题对决：Fargate 胜 10，EC2 胜 5", ex: [460, 106, 489] },
+    { a: "Lambda", b: "Fargate / Batch", rule: "15 分钟以内、事件驱动 → Lambda；超过 15 分钟或需要容器长跑 → Fargate / Batch，由 EventBridge 或 Step Functions 触发。", stat: "", ex: [47, 485, 513] },
+    { a: "Step Functions", b: "Lambda 互相调用", rule: "多步骤编排、等待、重试、人工审批 → Step Functions（回调 Task Token）。函数套函数是反模式。", stat: "", ex: [328, 186, 560] },
+    { a: "SQS", b: "Kinesis", rule: "解耦削峰、每条消息独立处理 → SQS；有序流、多消费者、可重放 → Kinesis。", stat: "同题对决：Kinesis 胜 5，SQS 胜 3", ex: [110, 624, 535] },
+    { a: "EventBridge", b: "SNS", rule: "基于内容的规则路由、跨账户事件总线、SaaS 事件源 → EventBridge；简单扇出推送 → SNS。", stat: "同题对决：EventBridge 胜 4，SNS 胜 2", ex: [464, 82, 358] },
+    { a: "Aurora", b: "RDS", rule: "更快故障转移、更多副本、全局数据库、Serverless 弹性 → Aurora。", stat: "同题对决：Aurora 胜 16，RDS 胜 10", ex: [349, 301] },
+    { a: "Aurora Global Database", b: "跨区域只读副本", rule: "RPO 约 1 秒、RTO 约 1 分钟 → Aurora Global；RPO/RTO 为分钟级且是 RDS → 跨区域只读副本提升。", stat: "", ex: [301, 189, 58, 502] },
+    { a: "Athena", b: "Redshift / EMR", rule: "偶尔查询、按需付费、S3 上的数据 → Athena；常驻复杂分析 → Redshift（或 Redshift Serverless）；大规模 Spark → EMR。", stat: "同题对决：Athena 胜 5，Redshift 胜 1", ex: [454, 230] },
+    { a: "SCP", b: "IAM 策略", rule: "组织范围、账户管理员也不能绕过 → SCP；单账户内授权 → IAM。", stat: "同题对决：SCP 胜 8，IAM 策略胜 4", ex: [142, 169, 181] },
+    { a: "WAF", b: "Shield", rule: "SQL 注入、XSS、限速、地理封禁 → WAF；大规模 DDoS 与成本保护 → Shield Advanced。", stat: "同题对决：WAF 胜 4，Shield 胜 0", ex: [221, 267, 222] },
+    { a: "EFS", b: "FSx", rule: "Linux NFS 共享 → EFS；Windows/SMB/AD → FSx for Windows；HPC → FSx for Lustre；多协议/NetApp → FSx for ONTAP。", stat: "", ex: [209, 498, 177, 212] },
+    { a: "ElastiCache", b: "DAX", rule: "DynamoDB 读加速且不改访问方式 → DAX；会话、排行榜、通用缓存 → ElastiCache Redis。", stat: "", ex: [477, 141, 292] },
+    { a: "ALB", b: "NLB", rule: "HTTP 路由、认证、WAF → ALB；TCP/UDP、固定 IP、PrivateLink 服务端 → NLB。", stat: "同题对决：ALB 胜 6，NLB 胜 3", ex: [467, 255, 205] },
+  ],
+
+  numbers: [
+    { k: "Lambda 最长运行", v: "15 分钟" },
+    { k: "Lambda 同步请求负载", v: "6 MB" },
+    { k: "SQS 可见性超时最大", v: "12 小时" },
+    { k: "SQS 消息保留", v: "最长 14 天" },
+    { k: "Step Functions 标准 / 快速", v: "1 年 / 5 分钟" },
+    { k: "Aurora Global Database", v: "复制延迟 < 1 秒，切换约 1 分钟，最多 5 个次要区域" },
+    { k: "Aurora / RDS 只读副本", v: "15 个 / 15 个（RDS MySQL 等）" },
+    { k: "S3 Glacier Deep Archive 取回", v: "12–48 小时" },
+    { k: "S3 Glacier Flexible 取回", v: "分钟（加急）到 12 小时" },
+    { k: "S3 Standard-IA / Glacier 最短存储时长", v: "30 天 / 90 天（Deep Archive 180 天）" },
+    { k: "S3 RTC 复制时间控制", v: "99.99% 对象 15 分钟内复制" },
+    { k: "Snowball Edge 存储优化", v: "约 80 TB 可用" },
+    { k: "Spot 中断通知", v: "2 分钟" },
+    { k: "Route 53 多值应答", v: "最多 8 条健康记录" },
+    { k: "DX 最高弹性", v: "两个 DX 位置 × 各两条连接" },
+    { k: "带宽算术", v: "1 Gbps 满速约 10 TB/天；100 Mbps 约 1 TB/天" },
+  ],
+
+  pitfalls: [
+    "SCP 不授予权限，也不影响管理账户；“明明允许却被拒绝”先查 SCP 和权限边界。",
+    "DAX 只加速读，不能解决写入容量不足。",
+    "Glacier Deep Archive 不能满足分钟级恢复；Instant Retrieval 才是毫秒级。",
+    "跨区域只读副本是异步复制，不能保证“零数据丢失”。",
+    "CloudFormation DeletionPolicy 不会帮你清空 S3 桶；删除非空桶需要自定义资源先清对象。",
+    "Organizations 只开“整合账单”时不能用 SCP，必须启用“所有功能”。",
+    "EFS/S3 冷存储层有最短存储时长，短保留期盲目转冷反而更贵。",
+    "ALB 不支持 UDP，也不能直接接原生 MQTT；UDP 用 NLB。",
+    "路由表没有“拒绝”规则；要按 IP 阻断用 NACL 或 WAF。",
+    "Gateway Endpoint 不能被本地网络或对等 VPC 使用；本地访问 S3 私网要接口端点。",
+    "VPC 对等不支持传递路由，CIDR 不能重叠。",
+    "Lambda 放进 VPC 后访问公网需要 NAT；访问 DynamoDB/S3 可用网关端点。",
+    "Server Migration Service 已停用，Rehost 选 Application Migration Service（MGN）。",
+    "成本分配标签必须在管理账户中激活才会出现在账单报表里。",
+  ],
+
+  plan: [
+    { t: "第 1 轮：只看抓手（快）", d: "在“真题库”里用背题模式按主题刷，每题只读“题干抓手 → 答案联想”，不读全文。目标是建立“场景 → 服务”的反射，683 题可以很快过完一遍。" },
+    { t: "第 2 轮：练习模式 + 四步审题法", d: "按主题做练习，每题强迫自己先说出问句标准和硬约束再看选项。错题自动进错题本。" },
+    { t: "第 3 轮：只刷错题和待核验题", d: "错题按妙招归类（每条妙招下有例题号），看自己是哪一类坑反复踩。待核验题看备注，理解正确的技术逻辑。" },
+    { t: "考前一天", d: "只看本页：四步审题法、对决表、数字速记、陷阱清单，再用模拟测验热身。" },
+  ],
+};
+
+</script>
+  <script>
+(function () {
+  "use strict";
+
+  const DATA = window.SAP_DATA;
+  const METHOD = window.SAP_METHOD;
+  const BANK_KEY = "sapc02-bank-data-v1";
+  let BANK = null;
+  const STORE_KEY = "sapc02-study-v1";
+  const DAY = 24 * 60 * 60 * 1000;
+  // Leitner 盒子对应的复习间隔（天），盒子 0 表示当天需重学
+  const INTERVALS = [0, 1, 2, 4, 8, 16, 32];
+  const MASTERED_BOX = 4;
+  const LETTERS = "ABCDEFGH";
+
+  const app = document.getElementById("app");
+
+  // ---------------- 存储 ----------------
+  function normalizeState(s) {
+    s = s && typeof s === "object" ? s : {};
+    const bank = s.bank && typeof s.bank === "object" ? s.bank : {};
+    return {
+      cards: s.cards || {},
+      questions: s.questions || {},
+      wrong: s.wrong || [],
+      bank: { rec: bank.rec || {}, wrong: bank.wrong || [], ui: bank.ui || {} },
+      tipsDone: s.tipsDone || {},
+    };
+  }
+  function loadState() {
+    try {
+      return normalizeState(JSON.parse(localStorage.getItem(STORE_KEY)));
+    } catch (_) {
+      return normalizeState(null);
+    }
+  }
+  let state = loadState();
+  function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+
+  // ---------------- 工具函数 ----------------
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+  function domainName(d) { return DATA.domains[d] ? DATA.domains[d].name : d; }
+  function domainOptions(selected, withAll = true) {
+    const opts = withAll ? [`<option value="all">全部领域</option>`] : [];
+    for (const [k, v] of Object.entries(DATA.domains)) {
+      opts.push(`<option value="${k}" ${selected === k ? "selected" : ""}>${esc(v.name)}（${v.weight}%）</option>`);
+    }
+    return opts.join("");
+  }
+  function sameSet(a, b) {
+    if (a.length !== b.length) return false;
+    const s = new Set(a);
+    return b.every((x) => s.has(x));
+  }
+
+  // ---------------- 闪卡调度 ----------------
+  function cardState(id) { return state.cards[id] || { box: 0, due: 0, seen: 0 }; }
+  function isDue(id, now = Date.now()) {
+    const c = state.cards[id];
+    return !c || c.due <= now;
+  }
+  function gradeCard(id, grade) {
+    const c = cardState(id);
+    if (grade === 0) c.box = 0;
+    else if (grade === 1) c.box = Math.max(1, c.box);
+    else c.box = Math.min(INTERVALS.length - 1, c.box + 1);
+    c.due = Date.now() + INTERVALS[c.box] * DAY;
+    c.seen += 1;
+    state.cards[id] = c;
+    save();
+  }
+
+  // ---------------- 视图：概览 ----------------
+  function renderHome() {
+    const now = Date.now();
+    const total = DATA.cards.length;
+    const mastered = DATA.cards.filter((c) => cardState(c.id).box >= MASTERED_BOX).length;
+    const due = DATA.cards.filter((c) => isDue(c.id, now)).length;
+    const qDone = DATA.questions.filter((q) => state.questions[q.id]).length;
+    const qRight = DATA.questions.filter((q) => state.questions[q.id] && state.questions[q.id].lastCorrect).length;
+
+    const rows = Object.entries(DATA.domains).map(([k, v]) => {
+      const cs = DATA.cards.filter((c) => c.d === k);
+      const m = cs.filter((c) => cardState(c.id).box >= MASTERED_BOX).length;
+      const learning = cs.filter((c) => { const b = cardState(c.id).box; return b > 0 && b < MASTERED_BOX; }).length;
+      const pm = cs.length ? (m / cs.length) * 100 : 0;
+      const pl = cs.length ? (learning / cs.length) * 100 : 0;
+      return `
+        <div class="domain-row">
+          <div class="head"><span>${esc(v.name)} <span class="pill">考试占比 ${v.weight}%</span></span><span>${m}/${cs.length} 已掌握</span></div>
+          <div class="bar"><i class="ok" style="width:${pm}%"></i><i class="mid" style="width:${pl}%"></i></div>
+        </div>`;
+    }).join("");
+
+    const bankDone = BANK ? BANK.list.filter((q) => state.bank.rec[q.id]).length : 0;
+    const bankRight = BANK ? BANK.list.filter((q) => state.bank.rec[q.id] && state.bank.rec[q.id].last).length : 0;
+
+    app.innerHTML = `
+      <div class="panel start">
+        <h3>病急乱投医？从这里开始</h3>
+        <p style="margin:0 0 12px">先花 20 分钟读完 <a href="#/method">方法论</a>（四步审题法 + 33 条妙招 + 产品对决表），再按主题刷 <a href="#/bank">真题库</a>：第一轮只看“题干抓手 → 答案联想”，建立条件反射。</p>
+        <div class="grid">
+          <div class="stat"><div class="num">${BANK ? `${bankDone}/${BANK.list.length}` : "未导入"}</div><div class="label">真题库已做${BANK ? `，最近正确率 ${bankDone ? Math.round((bankRight / bankDone) * 100) : 0}%` : ""}</div></div>
+          <div class="stat"><div class="num">${state.bank.wrong.length}</div><div class="label">真题错题</div></div>
+          <div class="stat"><div class="num">${Object.keys(state.tipsDone).length}/${METHOD.tips.length}</div><div class="label">已掌握的妙招</div></div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="panel stat"><div class="num">${due}</div><div class="label">今日待复习闪卡</div></div>
+        <div class="panel stat"><div class="num">${mastered}/${total}</div><div class="label">已掌握闪卡</div></div>
+        <div class="panel stat"><div class="num">${qDone ? Math.round((qRight / qDone) * 100) : 0}%</div><div class="label">练习题最近正确率（${qDone}/${DATA.questions.length} 已做）</div></div>
+        <div class="panel stat"><div class="num">${state.wrong.length}</div><div class="label">错题本</div></div>
+      </div>
+      <div class="panel">
+        <h3>各领域掌握度</h3>
+        <p class="muted" style="margin-top:0">绿色为已掌握（连续答对、间隔 ≥ 8 天），黄色为学习中。</p>
+        ${rows}
+      </div>
+      <div class="panel">
+        <h3>建议的每日节奏</h3>
+        <p style="margin:0">先清空 <a href="#/cards">闪卡</a> 的到期复习，再做 10 道 <a href="#/quiz">练习题</a>，最后回顾 <a href="#/wrong">错题本</a>。考前用 <a href="#/keywords">关键词速查</a> 过一遍“题干关键词 → 服务”的映射。</p>
+        <div class="actions">
+          <button class="btn" id="export">导出进度</button>
+          <button class="btn" id="import">导入进度</button>
+          <button class="btn bad" id="reset">重置全部进度</button>
+        </div>
+      </div>`;
+
+    document.getElementById("export").onclick = () => {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `sapc02-progress-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
+    document.getElementById("import").onclick = () => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "application/json";
+      input.onchange = async () => {
+        try {
+          state = normalizeState(JSON.parse(await input.files[0].text()));
+          save();
+          renderHome();
+        } catch (e) {
+          alert("导入失败：文件格式不正确");
+        }
+      };
+      input.click();
+    };
+    document.getElementById("reset").onclick = () => {
+      if (confirm("确定清空所有学习进度？此操作不可撤销。")) {
+        state = normalizeState(null);
+        save();
+        renderHome();
+      }
+    };
+  }
+
+  // ---------------- 视图：闪卡 ----------------
+  const cardSession = { domain: "all", mode: "due", queue: [], idx: 0, flipped: false };
+
+  function buildCardQueue() {
+    let pool = DATA.cards.filter((c) => cardSession.domain === "all" || c.d === cardSession.domain);
+    if (cardSession.mode === "due") pool = pool.filter((c) => isDue(c.id));
+    if (cardSession.mode === "weak") pool = pool.filter((c) => state.cards[c.id] && cardState(c.id).box <= 1);
+    cardSession.queue = shuffle(pool).map((c) => c.id);
+    cardSession.idx = 0;
+    cardSession.flipped = false;
+  }
+
+  function renderCards() {
+    const { queue, idx, flipped } = cardSession;
+    const toolbar = `
+      <div class="toolbar">
+        <select id="c-domain">${domainOptions(cardSession.domain)}</select>
+        <select id="c-mode">
+          <option value="due" ${cardSession.mode === "due" ? "selected" : ""}>到期复习</option>
+          <option value="all" ${cardSession.mode === "all" ? "selected" : ""}>全部随机</option>
+          <option value="weak" ${cardSession.mode === "weak" ? "selected" : ""}>薄弱卡片</option>
+        </select>
+        <span class="progress-text">${queue.length ? `${Math.min(idx + 1, queue.length)} / ${queue.length}` : ""}</span>
+      </div>`;
+
+    if (idx >= queue.length) {
+      app.innerHTML = toolbar + `
+        <div class="panel empty">
+          <h3>${queue.length ? "本轮完成！" : "当前没有需要复习的卡片"}</h3>
+          <p>${cardSession.mode === "due" ? "可以切换到“全部随机”继续刷，或去做练习题。" : "换个筛选条件再来一轮吧。"}</p>
+          <button class="btn primary" id="c-restart">再来一轮</button>
+        </div>`;
+      bindCardToolbar();
+      document.getElementById("c-restart").onclick = () => { buildCardQueue(); renderCards(); };
+      return;
+    }
+
+    const card = DATA.cards.find((c) => c.id === queue[idx]);
+    const cs = cardState(card.id);
+    app.innerHTML = toolbar + `
+      <div class="panel flashcard" id="fc">
+        <div>
+          <span class="pill domain">${esc(domainName(card.d))}</span>
+          ${card.tags.map((t) => `<span class="pill">${esc(t)}</span>`).join("")}
+          <span class="pill">盒子 ${cs.box}</span>
+        </div>
+        <div class="q">${esc(card.q)}</div>
+        ${flipped ? `<div class="a">${esc(card.a)}</div>` : `<div class="hint">先在脑中回答，再点击卡片或按空格查看答案</div>`}
+      </div>
+      ${flipped ? `
+        <div class="grade">
+          <button class="btn bad" data-g="0">1 · 不会（今天重学）</button>
+          <button class="btn mid" data-g="1">2 · 模糊</button>
+          <button class="btn ok" data-g="2">3 · 记住了</button>
+        </div>` : ""}`;
+
+    bindCardToolbar();
+    document.getElementById("fc").onclick = () => { if (!cardSession.flipped) { cardSession.flipped = true; renderCards(); } };
+    app.querySelectorAll("[data-g]").forEach((b) => { b.onclick = () => submitCardGrade(Number(b.dataset.g)); });
+  }
+
+  function submitCardGrade(g) {
+    const id = cardSession.queue[cardSession.idx];
+    gradeCard(id, g);
+    if (g === 0) cardSession.queue.push(id);
+    cardSession.idx += 1;
+    cardSession.flipped = false;
+    renderCards();
+  }
+
+  function bindCardToolbar() {
+    document.getElementById("c-domain").onchange = (e) => { cardSession.domain = e.target.value; buildCardQueue(); renderCards(); };
+    document.getElementById("c-mode").onchange = (e) => { cardSession.mode = e.target.value; buildCardQueue(); renderCards(); };
+  }
+
+  // ---------------- 视图：练习题（练习 & 错题共用） ----------------
+  function newQuizSession(source) {
+    return { source, domain: "all", count: 10, queue: [], idx: 0, selected: [], submitted: false, results: [], order: [] };
+  }
+  const quizSessions = { quiz: newQuizSession("quiz"), wrong: newQuizSession("wrong") };
+
+  function buildQuizQueue(sess) {
+    let pool = sess.source === "wrong"
+      ? DATA.questions.filter((q) => state.wrong.includes(q.id))
+      : DATA.questions.filter((q) => sess.domain === "all" || q.d === sess.domain);
+    pool = shuffle(pool);
+    if (sess.source === "quiz" && sess.count > 0) pool = pool.slice(0, sess.count);
+    sess.queue = pool.map((q) => q.id);
+    sess.idx = 0;
+    sess.results = [];
+    resetQuestion(sess);
+  }
+
+  function resetQuestion(sess) {
+    sess.selected = [];
+    sess.submitted = false;
+    const q = DATA.questions.find((x) => x.id === sess.queue[sess.idx]);
+    sess.order = q ? shuffle(q.options.map((_, i) => i)) : [];
+  }
+
+  function renderQuiz(sess) {
+    const isWrong = sess.source === "wrong";
+    const toolbar = isWrong
+      ? `<div class="toolbar"><h2 style="margin:0">错题本（${state.wrong.length}）</h2><span class="progress-text">${sess.queue.length ? `${Math.min(sess.idx + 1, sess.queue.length)} / ${sess.queue.length}` : ""}</span></div>`
+      : `<div class="toolbar">
+          <select id="q-domain">${domainOptions(sess.domain)}</select>
+          <select id="q-count">
+            ${[5, 10, 20, 0].map((n) => `<option value="${n}" ${sess.count === n ? "selected" : ""}>${n ? n + " 题" : "全部题目"}</option>`).join("")}
+          </select>
+          <button class="btn" id="q-new">重新出题</button>
+          <span class="progress-text">${sess.queue.length ? `${Math.min(sess.idx + 1, sess.queue.length)} / ${sess.queue.length}` : ""}</span>
+        </div>`;
+
+    if (!sess.queue.length || sess.idx >= sess.queue.length) {
+      app.innerHTML = toolbar + (sess.queue.length ? quizSummary(sess) : `
+        <div class="panel empty">
+          ${isWrong ? "<h3>错题本是空的</h3><p>在练习中答错的题会自动加入这里，答对后自动移出。</p>" : "<h3>没有符合条件的题目</h3>"}
+        </div>`);
+      bindQuizToolbar(sess);
+      const again = document.getElementById("q-again");
+      if (again) again.onclick = () => { buildQuizQueue(sess); renderQuiz(sess); };
+      return;
+    }
+
+    const q = DATA.questions.find((x) => x.id === sess.queue[sess.idx]);
+    const multi = q.answer.length > 1;
+    const correct = sess.submitted && sameSet(sess.selected, q.answer);
+
+    const opts = sess.order.map((origIdx, pos) => {
+      let cls = "option";
+      if (sess.submitted) {
+        if (q.answer.includes(origIdx)) cls += " correct";
+        else if (sess.selected.includes(origIdx)) cls += " wrong";
+      } else if (sess.selected.includes(origIdx)) cls += " selected";
+      return `<button class="${cls}" data-o="${origIdx}" ${sess.submitted ? "disabled" : ""}>
+        <span class="letter">${LETTERS[pos]}</span><span>${esc(q.options[origIdx])}</span></button>`;
+    }).join("");
+
+    const correctLetters = sess.order.map((o, pos) => (q.answer.includes(o) ? LETTERS[pos] : null)).filter(Boolean).join("、");
+
+    app.innerHTML = toolbar + `
+      <div class="panel">
+        <span class="pill domain">${esc(domainName(q.d))}</span>
+        <span class="pill">${multi ? `多选（选 ${q.answer.length} 项）` : "单选"}</span>
+        <div class="stem">${esc(q.stem)}</div>
+        <div class="options">${opts}</div>
+        ${sess.submitted ? `
+          <div class="explain ${correct ? "ok" : "bad"}">
+            <strong>${correct ? "回答正确" : `回答错误，正确答案：${correctLetters}`}</strong>
+            <div>${esc(q.explain)}</div>
+          </div>` : ""}
+        <div class="actions">
+          ${sess.submitted
+            ? `<button class="btn primary" id="q-next">${sess.idx + 1 < sess.queue.length ? "下一题" : "查看结果"}</button>`
+            : `<button class="btn primary" id="q-submit" ${sess.selected.length ? "" : "disabled"}>提交答案</button>`}
+        </div>
+      </div>`;
+
+    bindQuizToolbar(sess);
+    app.querySelectorAll("[data-o]").forEach((b) => { b.onclick = () => toggleOption(sess, Number(b.dataset.o)); });
+    const submit = document.getElementById("q-submit");
+    if (submit) submit.onclick = () => submitQuiz(sess);
+    const next = document.getElementById("q-next");
+    if (next) next.onclick = () => nextQuestion(sess);
+  }
+
+  function toggleOption(sess, o) {
+    if (sess.submitted) return;
+    const q = DATA.questions.find((x) => x.id === sess.queue[sess.idx]);
+    if (q.answer.length > 1) {
+      sess.selected = sess.selected.includes(o) ? sess.selected.filter((x) => x !== o) : sess.selected.concat(o);
+    } else {
+      sess.selected = [o];
+    }
+    renderQuiz(sess);
+  }
+
+  function submitQuiz(sess) {
+    if (sess.submitted || !sess.selected.length) return;
+    const q = DATA.questions.find((x) => x.id === sess.queue[sess.idx]);
+    const ok = sameSet(sess.selected, q.answer);
+    sess.submitted = true;
+    sess.results.push({ id: q.id, ok });
+
+    const rec = state.questions[q.id] || { attempts: 0, correct: 0 };
+    rec.attempts += 1;
+    if (ok) rec.correct += 1;
+    rec.lastCorrect = ok;
+    state.questions[q.id] = rec;
+    if (!ok && !state.wrong.includes(q.id)) state.wrong.push(q.id);
+    if (ok && sess.source === "wrong") state.wrong = state.wrong.filter((x) => x !== q.id);
+    save();
+    renderQuiz(sess);
+  }
+
+  function nextQuestion(sess) {
+    sess.idx += 1;
+    resetQuestion(sess);
+    renderQuiz(sess);
+  }
+
+  function quizSummary(sess) {
+    const right = sess.results.filter((r) => r.ok).length;
+    const pct = Math.round((right / sess.results.length) * 100);
+    const wrongList = sess.results.filter((r) => !r.ok).map((r) => {
+      const q = DATA.questions.find((x) => x.id === r.id);
+      return `<div class="list-item"><span class="pill domain">${esc(domainName(q.d))}</span><div>${esc(q.stem)}</div></div>`;
+    }).join("");
+    return `
+      <div class="panel">
+        <div class="score">${pct}%</div>
+        <p>答对 ${right} / ${sess.results.length} 题。${pct >= 75 ? "表现不错，SAP-C02 及格线为 750/1000。" : "继续加油，建议先回顾相关领域的闪卡。"}</p>
+        ${wrongList ? `<h3>本轮错题</h3>${wrongList}` : ""}
+        <div class="actions"><button class="btn primary" id="q-again">再练一轮</button></div>
+      </div>`;
+  }
+
+  function bindQuizToolbar(sess) {
+    if (sess.source !== "quiz") return;
+    document.getElementById("q-domain").onchange = (e) => { sess.domain = e.target.value; buildQuizQueue(sess); renderQuiz(sess); };
+    document.getElementById("q-count").onchange = (e) => { sess.count = Number(e.target.value); buildQuizQueue(sess); renderQuiz(sess); };
+    document.getElementById("q-new").onclick = () => { buildQuizQueue(sess); renderQuiz(sess); };
+  }
+
+  // ---------------- 视图：关键词速查 ----------------
+  let kwFilter = "";
+  function renderKeywords() {
+    app.innerHTML = `
+      <h2>题干关键词 → 答案服务</h2>
+      <div class="toolbar"><input type="search" id="kw" placeholder="搜索关键词或服务，例如：DR、迁移、SCP、加密……" value="${esc(kwFilter)}" /></div>
+      <div class="panel"><table class="kw-table" id="kw-table"></table></div>`;
+    const input = document.getElementById("kw");
+    input.oninput = () => { kwFilter = input.value; drawKeywordTable(); };
+    input.focus();
+    drawKeywordTable();
+  }
+
+  function highlight(text, term) {
+    const safe = esc(text);
+    if (!term) return safe;
+    const re = new RegExp(esc(term).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+    return safe.replace(re, (m) => `<mark>${m}</mark>`);
+  }
+
+  function drawKeywordTable() {
+    const term = kwFilter.trim();
+    const t = term.toLowerCase();
+    const rows = DATA.keywords.filter((r) => !t || r.k.toLowerCase().includes(t) || r.v.toLowerCase().includes(t));
+    document.getElementById("kw-table").innerHTML = rows.length
+      ? rows.map((r) => `<tr><td>${highlight(r.k, term)}</td><td>${highlight(r.v, term)}</td></tr>`).join("")
+      : `<tr><td colspan="2" class="empty">没有匹配的条目</td></tr>`;
+  }
+
+  // ---------------- 视图：方法论 ----------------
+  const tipsByQuestion = {};
+  METHOD.tips.forEach((t, i) => t.ex.forEach((id) => { (tipsByQuestion[id] = tipsByQuestion[id] || []).push(i); }));
+  METHOD.duels.forEach((d) => d.ex.forEach((id) => { (tipsByQuestion[id] = tipsByQuestion[id] || []); }));
+
+  let methodCat = "全部";
+  function qChips(ids) {
+    return ids.map((id) => {
+      const q = BANK && BANK.byId[id];
+      const title = q ? `${q.grip} → ${q.hint}` : "导入真题库后可查看原题";
+      return `<a class="chip ${q && q.unverified ? "warn" : ""}" href="#/bank?id=${id}" title="${esc(title)}">#${id}</a>`;
+    }).join("");
+  }
+
+  function renderMethod() {
+    const cats = ["全部", "审题", "选项", "关键词"];
+    const tips = METHOD.tips.map((t, i) => ({ ...t, i })).filter((t) => methodCat === "全部" || t.cat === methodCat);
+    app.innerHTML = `
+      <nav class="toc">
+        <a href="#m-steps">四步审题法</a><a href="#m-stats">题库统计</a><a href="#m-tips">妙招</a>
+        <a href="#m-domains">从提纲入手</a><a href="#m-duels">从产品入手</a><a href="#m-numbers">数字速记</a>
+        <a href="#m-pitfalls">陷阱清单</a><a href="#m-plan">冲刺计划</a>
+      </nav>
+      ${BANK ? "" : `<div class="panel notice">题号标签（如 #683）可直接跳到原题。请先在 <a href="#/bank">真题库</a> 导入你的 CSV。</div>`}
+
+      <section class="panel" id="m-steps">
+        <h2>四步审题法（每题 30 秒内完成前三步）</h2>
+        <ol class="steps">${METHOD.steps.map((s) => `<li><strong>${esc(s.t)}</strong><div>${esc(s.d)}</div></li>`).join("")}</ol>
+      </section>
+
+      <section class="panel" id="m-stats">
+        <h2>用 683 道题统计出来的规律</h2>
+        <p class="muted">统计口径：按题库答案计算各类选项的正确率。这些规律只能用来排除和缩小范围，最终仍以技术正确为准。</p>
+        <table class="kw-table">${METHOD.stats.map((s) => `<tr><td>${esc(s.k)}</td><td>${esc(s.v)}</td></tr>`).join("")}</table>
+      </section>
+
+      <section id="m-tips">
+        <div class="toolbar">
+          <h2 style="margin:0">妙招（${METHOD.tips.length} 条）</h2>
+          <span class="seg">${cats.map((c) => `<button class="btn ${c === methodCat ? "primary" : ""}" data-cat="${c}">${c}</button>`).join("")}</span>
+        </div>
+        ${tips.map((t) => `
+          <div class="panel tip ${state.tipsDone[t.i] ? "done" : ""}">
+            <div class="tip-head">
+              <span class="pill domain">${esc(t.cat)}</span>
+              <h3>${t.i + 1}. ${esc(t.title)}</h3>
+              <label class="done-toggle"><input type="checkbox" data-tip="${t.i}" ${state.tipsDone[t.i] ? "checked" : ""}/> 已掌握</label>
+            </div>
+            <p>${esc(t.body)}</p>
+            <div class="chips"><span class="muted">例题：</span>${qChips(t.ex)}</div>
+          </div>`).join("")}
+      </section>
+
+      <section class="panel" id="m-domains">
+        <h2>从提纲入手：按考试领域建立决策顺序</h2>
+        ${METHOD.domains.map((d) => `
+          <div class="domain-block">
+            <h3>${esc(d.name)}</h3>
+            <div class="muted">${esc(d.bank)}</div>
+            <ol>${d.flow.map((f) => `<li>${esc(f)}</li>`).join("")}</ol>
+            <div class="chips"><span class="muted">代表题：</span>${qChips(d.ex)}</div>
+          </div>`).join("")}
+      </section>
+
+      <section class="panel" id="m-duels">
+        <h2>从产品入手：易混产品对决表</h2>
+        <p class="muted">“同题对决”指两个服务出现在同一道题的不同选项中时，各自是正确答案的次数。</p>
+        <table class="kw-table duel">
+          ${METHOD.duels.map((d) => `<tr><td>${esc(d.a)} <span class="muted">vs</span> ${esc(d.b)}</td>
+            <td>${esc(d.rule)}${d.stat ? `<div class="muted">${esc(d.stat)}</div>` : ""}<div class="chips">${qChips(d.ex)}</div></td></tr>`).join("")}
+        </table>
+      </section>
+
+      <section class="panel" id="m-numbers">
+        <h2>数字速记</h2>
+        <table class="kw-table">${METHOD.numbers.map((n) => `<tr><td>${esc(n.k)}</td><td>${esc(n.v)}</td></tr>`).join("")}</table>
+      </section>
+
+      <section class="panel" id="m-pitfalls">
+        <h2>高频陷阱清单</h2>
+        <ul class="pitfalls">${METHOD.pitfalls.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>
+      </section>
+
+      <section class="panel" id="m-plan">
+        <h2>冲刺计划</h2>
+        <ol class="steps">${METHOD.plan.map((s) => `<li><strong>${esc(s.t)}</strong><div>${esc(s.d)}</div></li>`).join("")}</ol>
+      </section>`;
+
+    app.querySelectorAll("[data-cat]").forEach((b) => { b.onclick = () => { methodCat = b.dataset.cat; renderMethod(); document.getElementById("m-tips").scrollIntoView(); }; });
+    app.querySelectorAll("[data-tip]").forEach((c) => {
+      c.onchange = () => {
+        if (c.checked) state.tipsDone[c.dataset.tip] = Date.now();
+        else delete state.tipsDone[c.dataset.tip];
+        save();
+        c.closest(".tip").classList.toggle("done", c.checked);
+      };
+    });
+    app.querySelectorAll(".toc a").forEach((a) => {
+      a.onclick = (e) => { e.preventDefault(); document.querySelector(a.getAttribute("href")).scrollIntoView({ behavior: "smooth" }); };
+    });
+  }
+
+  // ---------------- 真题库（本地导入 CSV） ----------------
+  function parseCSV(text) {
+    const rows = [];
+    let row = [], field = "", i = 0, inQuotes = false;
+    if (text.charCodeAt(0) === 0xfeff) i = 1;
+    for (; i < text.length; i++) {
+      const ch = text[i];
+      if (inQuotes) {
+        if (ch === '"') {
+          if (text[i + 1] === '"') { field += '"'; i++; } else inQuotes = false;
+        } else field += ch;
+      } else if (ch === '"') inQuotes = true;
+      else if (ch === ",") { row.push(field); field = ""; }
+      else if (ch === "\n" || ch === "\r") {
+        if (ch === "\r" && text[i + 1] === "\n") i++;
+        row.push(field); rows.push(row); row = []; field = "";
+      } else field += ch;
+    }
+    if (field || row.length) { row.push(field); rows.push(row); }
+    return rows.filter((r) => r.some((c) => c.trim()));
+  }
+
+  function splitOptions(s) {
+    const out = {};
+    String(s).split(/；(?=[A-H]：)/).forEach((p) => {
+      const m = p.trim().match(/^([A-H])：([\s\S]*)$/);
+      if (m) out[m[1]] = m[2].trim();
+    });
+    return out;
+  }
+
+  function bankFromCSV(text) {
+    const rows = parseCSV(text);
+    const head = rows.shift() || [];
+    const col = (name) => head.indexOf(name);
+    const need = ["原题号", "原题干", "全部选项", "题库答案"];
+    if (need.some((n) => col(n) < 0)) throw new Error("缺少必要列：" + need.filter((n) => col(n) < 0).join("、"));
+    const get = (r, n) => (col(n) >= 0 ? (r[col(n)] || "").trim() : "");
+    const list = rows.map((r) => {
+      const options = splitOptions(get(r, "全部选项"));
+      const answer = (get(r, "题库答案").match(/[A-H]/g) || []).filter((l) => options[l]);
+      return {
+        id: Number(get(r, "原题号")),
+        topic: get(r, "主题分类") || "未分类",
+        type: get(r, "题型"),
+        grip: get(r, "题干抓手"),
+        hint: get(r, "答案联想"),
+        memo: get(r, "关联记忆短句"),
+        split: get(r, "多选拆记"),
+        breakdown: get(r, "长题拆解"),
+        unverified: get(r, "核验状态") === "待核验",
+        note: get(r, "核验备注"),
+        stem: get(r, "原题干"),
+        options,
+        answer,
+        explain: get(r, "原解析"),
+      };
+    }).filter((q) => q.id && q.stem && Object.keys(q.options).length);
+    if (!list.length) throw new Error("没有解析出题目");
+    return list;
+  }
+
+  function setBank(list) {
+    list.sort((a, b) => a.id - b.id);
+    const byId = {};
+    list.forEach((q) => { byId[q.id] = q; });
+    const topics = [...new Set(list.map((q) => q.topic))];
+    BANK = { list, byId, topics };
+  }
+
+  function persistBank(list) {
+    try { localStorage.setItem(BANK_KEY, JSON.stringify(list)); return true; } catch (_) { return false; }
+  }
+
+  async function initBank() {
+    if (typeof window.SAP_BANK_CSV === "string") {
+      try { setBank(bankFromCSV(window.SAP_BANK_CSV)); return; } catch (_) { /* 内嵌数据损坏时退回其他来源 */ }
+    }
+    try {
+      const cached = localStorage.getItem(BANK_KEY);
+      if (cached) { setBank(JSON.parse(cached)); return; }
+    } catch (_) { /* 缓存损坏时忽略，走下面的加载 */ }
+    if (location.protocol.startsWith("http")) {
+      try {
+        const res = await fetch("bank.csv", { cache: "no-store" });
+        if (res.ok) {
+          const list = bankFromCSV(await res.text());
+          setBank(list);
+          persistBank(list);
+        }
+      } catch (_) { /* 同目录没有 bank.csv 时保持未导入状态 */ }
+    }
+  }
+
+  function importBankFile(onDone) {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".csv,text/csv";
+    input.onchange = async () => {
+      try {
+        const list = bankFromCSV(await input.files[0].text());
+        setBank(list);
+        const ok = persistBank(list);
+        alert(`已导入 ${list.length} 道题${ok ? "" : "（浏览器存储空间不足，本次仅在当前页面有效）"}`);
+        onDone();
+      } catch (e) {
+        alert("导入失败：" + e.message);
+      }
+    };
+    input.click();
+  }
+
+  const bankSess = Object.assign(
+    { topic: "all", scope: "all", mode: "study", order: "seq", list: [], idx: 0, selected: [], submitted: false, showGrip: false },
+    state.bank.ui
+  );
+
+  function saveBankUi() {
+    const { topic, scope, mode, order } = bankSess;
+    state.bank.ui = { topic, scope, mode, order, pos: bankSess.list[bankSess.idx] };
+    save();
+  }
+
+  function buildBankList(keepId) {
+    let pool = BANK.list.filter((q) => bankSess.topic === "all" || q.topic === bankSess.topic);
+    if (bankSess.scope === "reliable") pool = pool.filter((q) => !q.unverified);
+    if (bankSess.scope === "unverified") pool = pool.filter((q) => q.unverified);
+    if (bankSess.scope === "wrong") pool = pool.filter((q) => state.bank.wrong.includes(q.id));
+    if (bankSess.scope === "todo") pool = pool.filter((q) => !state.bank.rec[q.id]);
+    if (bankSess.scope === "multi") pool = pool.filter((q) => q.answer.length > 1);
+    if (bankSess.order === "random") pool = shuffle(pool);
+    bankSess.list = pool.map((q) => q.id);
+    const at = keepId ? bankSess.list.indexOf(keepId) : -1;
+    bankSess.idx = at >= 0 ? at : 0;
+    resetBankQuestion();
+  }
+
+  function resetBankQuestion() {
+    bankSess.selected = [];
+    bankSess.submitted = false;
+    bankSess.showGrip = false;
+  }
+
+  function openBankQuestion(id) {
+    if (!BANK || !BANK.byId[id]) return false;
+    if (!bankSess.list.includes(id)) {
+      bankSess.topic = "all";
+      bankSess.scope = "all";
+      bankSess.order = "seq";
+    }
+    buildBankList(id);
+    bankSess.built = true;
+    return true;
+  }
+
+  function renderBank() {
+    if (!BANK) {
+      app.innerHTML = `
+        <div class="panel">
+          <h2>真题库</h2>
+          <p>导入你整理的题库 CSV（需包含“原题号、原题干、全部选项、题库答案”等列，推荐同时包含“题干抓手、答案联想、核验状态”）。数据只保存在本机浏览器，不会上传。</p>
+          <p class="muted">也可以把 CSV 重命名为 <code>bank.csv</code> 放在 <code>index.html</code> 同目录，用本地 HTTP 服务打开时会自动加载。</p>
+          <div class="actions" style="justify-content:flex-start"><button class="btn primary" id="b-import">导入 CSV</button></div>
+        </div>`;
+      document.getElementById("b-import").onclick = () => importBankFile(() => { buildBankList(); renderBank(); });
+      return;
+    }
+    if (!bankSess.built) { buildBankList(bankSess.pos); bankSess.built = true; }
+
+    const opt = (v, label, cur) => `<option value="${v}" ${cur === v ? "selected" : ""}>${label}</option>`;
+    const count = (t) => BANK.list.filter((q) => q.topic === t).length;
+    const toolbar = `
+      <div class="toolbar">
+        <select id="b-topic">${opt("all", `全部主题（${BANK.list.length}）`, bankSess.topic)}${BANK.topics.map((t) => opt(t, `${t}（${count(t)}）`, bankSess.topic)).join("")}</select>
+        <select id="b-scope">
+          ${opt("all", "全部题目", bankSess.scope)}${opt("reliable", "仅可靠题", bankSess.scope)}${opt("unverified", "仅待核验", bankSess.scope)}
+          ${opt("multi", "仅多选题", bankSess.scope)}${opt("todo", "未做过", bankSess.scope)}${opt("wrong", `错题（${state.bank.wrong.length}）`, bankSess.scope)}
+        </select>
+        <select id="b-mode">${opt("study", "背题模式", bankSess.mode)}${opt("practice", "练习模式", bankSess.mode)}</select>
+        <select id="b-order">${opt("seq", "按题号", bankSess.order)}${opt("random", "随机", bankSess.order)}</select>
+        <input id="b-jump" type="number" min="1" placeholder="题号" style="width:90px" />
+        <span class="progress-text">${bankSess.list.length ? `${bankSess.idx + 1} / ${bankSess.list.length}` : ""}</span>
+      </div>`;
+
+    if (!bankSess.list.length) {
+      app.innerHTML = toolbar + `<div class="panel empty">当前筛选条件下没有题目</div>` + bankFooter();
+      bindBank();
+      return;
+    }
+
+    const q = BANK.byId[bankSess.list[bankSess.idx]];
+    const reveal = bankSess.mode === "study" || bankSess.submitted;
+    const correct = bankSess.submitted && sameSet(bankSess.selected, q.answer);
+    const rec = state.bank.rec[q.id];
+    const multi = q.answer.length > 1;
+    const relatedTips = (tipsByQuestion[q.id] || []).map((i) => METHOD.tips[i]);
+
+    const opts = Object.entries(q.options).map(([k, v]) => {
+      let cls = "option";
+      if (reveal && q.answer.includes(k)) cls += " correct";
+      else if (reveal && bankSess.selected.includes(k)) cls += " wrong";
+      else if (bankSess.selected.includes(k)) cls += " selected";
+      return `<button class="${cls}" data-o="${k}" ${reveal ? "disabled" : ""}><span class="letter">${k}</span><span>${esc(v)}</span></button>`;
+    }).join("");
+
+    app.innerHTML = toolbar + `
+      <div class="panel">
+        <div>
+          <span class="pill domain">原题 ${q.id}</span>
+          <span class="pill">${esc(q.topic)}</span>
+          <span class="pill">${multi ? `多选（选 ${q.answer.length} 项）` : "单选"}</span>
+          ${q.unverified ? `<span class="pill warn">待核验</span>` : ""}
+          ${rec ? `<span class="pill">做过 ${rec.attempts} 次 · 对 ${rec.correct} 次</span>` : ""}
+        </div>
+        ${bankSess.mode === "practice" && !reveal ? `
+          <div class="grip-line">${bankSess.showGrip
+            ? `<strong>题干抓手：</strong>${esc(q.grip)}`
+            : `<button class="btn" id="b-grip">看一眼题干抓手（H）</button>`}</div>` : `
+          <div class="grip-line"><strong>题干抓手：</strong>${esc(q.grip)} <span class="muted">→</span> <strong>答案联想：</strong>${esc(q.hint)}</div>`}
+        <div class="stem">${esc(q.stem)}</div>
+        <div class="options">${opts}</div>
+        ${reveal ? `
+          <div class="explain ${bankSess.mode === "practice" ? (correct ? "ok" : "bad") : ""}">
+            <strong>${bankSess.mode === "practice" ? (correct ? "回答正确 · " : "回答错误 · ") : ""}题库答案：${q.answer.join("、") || "（缺失）"}</strong>
+            ${q.memo ? `<div><strong>记忆短句：</strong>${esc(q.memo)}</div>` : ""}
+            ${multi && q.split ? `<div><strong>多选拆记：</strong>${esc(q.split)}</div>` : ""}
+            ${q.unverified ? `<div class="warn-text"><strong>核验备注：</strong>${esc(q.note || "原答案存在疑点，请对照技术逻辑判断")}</div>` : ""}
+            ${relatedTips.length ? `<div><strong>相关妙招：</strong>${relatedTips.map((t) => `<a href="#/method">${esc(t.title)}</a>`).join("；")}</div>` : ""}
+            ${q.explain ? `<details><summary>原解析</summary><div>${esc(q.explain)}</div></details>` : ""}
+          </div>` : ""}
+        <div class="actions">
+          <button class="btn" id="b-prev" ${bankSess.idx === 0 ? "disabled" : ""}>上一题</button>
+          ${bankSess.mode === "practice" && !reveal ? `<button class="btn primary" id="b-submit" ${bankSess.selected.length ? "" : "disabled"}>提交答案</button>` : ""}
+          <button class="btn ${reveal ? "primary" : ""}" id="b-next" ${bankSess.idx >= bankSess.list.length - 1 ? "disabled" : ""}>下一题</button>
+        </div>
+      </div>` + bankFooter();
+    bindBank(q);
+  }
+
+  function bankFooter() {
+    return `<div class="actions" style="justify-content:flex-start">
+      <span class="muted">已导入 ${BANK.list.length} 题，其中待核验 ${BANK.list.filter((q) => q.unverified).length} 题。</span>
+      <button class="btn" id="b-reimport">重新导入 CSV</button>
+      <button class="btn bad" id="b-clear">移除题库</button>
+    </div>`;
+  }
+
+  function bindBank(q) {
+    const on = (id, ev, fn) => { const el = document.getElementById(id); if (el) el[ev] = fn; };
+    const refilter = (key) => (e) => { bankSess[key] = e.target.value; buildBankList(); saveBankUi(); renderBank(); };
+    on("b-topic", "onchange", refilter("topic"));
+    on("b-scope", "onchange", refilter("scope"));
+    on("b-order", "onchange", refilter("order"));
+    on("b-mode", "onchange", (e) => { bankSess.mode = e.target.value; resetBankQuestion(); saveBankUi(); renderBank(); });
+    on("b-jump", "onkeydown", (e) => {
+      if (e.key !== "Enter") return;
+      const id = Number(e.target.value);
+      if (!openBankQuestion(id)) { alert("题库中没有这个题号"); return; }
+      saveBankUi(); renderBank();
+    });
+    on("b-prev", "onclick", () => moveBank(-1));
+    on("b-next", "onclick", () => moveBank(1));
+    on("b-submit", "onclick", submitBank);
+    on("b-grip", "onclick", () => { bankSess.showGrip = true; renderBank(); });
+    on("b-reimport", "onclick", () => importBankFile(() => { buildBankList(); renderBank(); }));
+    on("b-clear", "onclick", () => {
+      if (typeof window.SAP_BANK_CSV === "string") { alert("当前题库内嵌在 HTML 文件中，无法移除。"); return; }
+      if (!confirm("从本机浏览器移除已导入的题库？（做题记录会保留）")) return;
+      localStorage.removeItem(BANK_KEY);
+      BANK = null;
+      renderBank();
+    });
+    if (q) app.querySelectorAll("[data-o]").forEach((b) => { b.onclick = () => toggleBankOption(q, b.dataset.o); });
+  }
+
+  function toggleBankOption(q, k) {
+    if (bankSess.mode !== "practice" || bankSess.submitted || !q.options[k]) return;
+    if (q.answer.length > 1) {
+      bankSess.selected = bankSess.selected.includes(k) ? bankSess.selected.filter((x) => x !== k) : bankSess.selected.concat(k);
+    } else bankSess.selected = [k];
+    renderBank();
+  }
+
+  function submitBank() {
+    const q = BANK.byId[bankSess.list[bankSess.idx]];
+    if (bankSess.submitted || !bankSess.selected.length || !q.answer.length) return;
+    const ok = sameSet(bankSess.selected, q.answer);
+    bankSess.submitted = true;
+    const rec = state.bank.rec[q.id] || { attempts: 0, correct: 0 };
+    rec.attempts += 1;
+    if (ok) rec.correct += 1;
+    rec.last = ok;
+    state.bank.rec[q.id] = rec;
+    if (!ok && !state.bank.wrong.includes(q.id)) state.bank.wrong.push(q.id);
+    if (ok && bankSess.scope === "wrong") state.bank.wrong = state.bank.wrong.filter((x) => x !== q.id);
+    save();
+    renderBank();
+  }
+
+  function moveBank(d) {
+    const next = bankSess.idx + d;
+    if (next < 0 || next >= bankSess.list.length) return;
+    bankSess.idx = next;
+    resetBankQuestion();
+    saveBankUi();
+    renderBank();
+    window.scrollTo(0, 0);
+  }
+
+  // ---------------- 路由与快捷键 ----------------
+  let currentView = "home";
+  function route() {
+    const [view, query] = (location.hash.replace(/^#\//, "") || "home").split("?");
+    currentView = ["home", "method", "bank", "cards", "quiz", "wrong", "keywords"].includes(view) ? view : "home";
+    document.querySelectorAll("#tabs a").forEach((a) => a.classList.toggle("active", a.dataset.view === currentView));
+    if (currentView === "home") renderHome();
+    if (currentView === "method") renderMethod();
+    if (currentView === "bank") {
+      const id = Number(new URLSearchParams(query || "").get("id"));
+      if (id && openBankQuestion(id)) saveBankUi();
+      renderBank();
+    }
+    if (currentView === "cards") { buildCardQueue(); renderCards(); }
+    if (currentView === "quiz") { if (!quizSessions.quiz.queue.length) buildQuizQueue(quizSessions.quiz); renderQuiz(quizSessions.quiz); }
+    if (currentView === "wrong") { buildQuizQueue(quizSessions.wrong); renderQuiz(quizSessions.wrong); }
+    if (currentView === "keywords") renderKeywords();
+    window.scrollTo(0, 0);
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.target.matches("input, select, textarea") || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (currentView === "cards" && cardSession.idx < cardSession.queue.length) {
+      if (e.key === " ") {
+        e.preventDefault();
+        if (!cardSession.flipped) { cardSession.flipped = true; renderCards(); }
+      } else if (cardSession.flipped && ["1", "2", "3"].includes(e.key)) {
+        submitCardGrade(Number(e.key) - 1);
+      }
+    }
+    if (currentView === "bank" && BANK && bankSess.list.length) {
+      const q = BANK.byId[bankSess.list[bankSess.idx]];
+      const k = e.key.toUpperCase();
+      if (e.key.length === 1 && q.options[k]) toggleBankOption(q, k);
+      else if (k === "H" && bankSess.mode === "practice") { bankSess.showGrip = true; renderBank(); }
+      else if (e.key === "ArrowRight") moveBank(1);
+      else if (e.key === "ArrowLeft") moveBank(-1);
+      else if (e.key === "Enter") {
+        e.preventDefault();
+        const revealed = bankSess.mode === "study" || bankSess.submitted;
+        revealed ? moveBank(1) : submitBank();
+      }
+      return;
+    }
+    if (currentView === "quiz" || currentView === "wrong") {
+      const sess = quizSessions[currentView];
+      if (sess.idx >= sess.queue.length) return;
+      const pos = LETTERS.indexOf(e.key.toUpperCase());
+      if (pos >= 0 && pos < sess.order.length && e.key.length === 1) toggleOption(sess, sess.order[pos]);
+      else if (e.key === "Enter") {
+        e.preventDefault();
+        sess.submitted ? nextQuestion(sess) : submitQuiz(sess);
+      }
+    }
+  });
+
+  window.addEventListener("hashchange", route);
+  initBank().then(route);
+})();
+
+</script>
+</body>
+</html>
